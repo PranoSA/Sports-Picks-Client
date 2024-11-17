@@ -1,0 +1,4 @@
+/*
+    Here is to show the results of the week
+    For the group
+*/
