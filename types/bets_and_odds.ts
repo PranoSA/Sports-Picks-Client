@@ -155,7 +155,7 @@ type Bet = {
 
 type Choice = {
   bet_id: number;
-  game_id: Game;
+  game_id: string;
   username?: string;
   userId?: string;
   //choice will be 0 for road team, 1 for home team
@@ -164,19 +164,37 @@ type Choice = {
   choice: 0 | 1;
 };
 
+/*
+    .createTable(TableNames.Pick_Table, (table) => {
+      table
+        .uuid(PickTableColumns.pick_id)
+        .primary()
+        .defaultTo(knex.raw('gen_random_uuid()'));
+      table.integer(PickTableColumns.bet_id).notNullable();
+      table.uuid(PickTableColumns.game_id).notNullable();
+      table.uuid(PickTableColumns.user_id).notNullable();
+
+      table.boolean(PickTableColumns.pick).notNullable();
+      //BET ID IS NOT!!!!!!!!!! A FOREIGN KEY
+      table
+        .foreign(PickTableColumns.game_id)
+        .references(`${TableNames.Game_Table}.${GameTableColumns.game_id}`);
+    })
+        */
+
 type InsertionChoice = {
-  bet_id: number;
+  bet_id: number; //index of the bet in the group
   game_id: number;
-  username: string;
-  choice: 0 | 1;
+  user_id: string;
+  choice: boolean;
 };
 
 type FetchedChoice = {
-  choice_id: string;
+  pick_id: string;
   bet_id: number;
   game_id: number;
   username: string;
-  choice: 0 | 1;
+  choice: boolean;
 };
 
 export type {
@@ -195,4 +213,6 @@ export type {
   InsertionGroup,
   Bet,
   Choice,
+  InsertionChoice,
+  FetchedChoice,
 };
