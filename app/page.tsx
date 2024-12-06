@@ -1,101 +1,145 @@
-import Image from "next/image";
+'use client';
+import Image from 'next/image';
 
-export default function Home() {
+//login
+import {
+  SessionProvider,
+  SessionProviderProps,
+  signIn,
+  signOut,
+  useSession,
+} from 'next-auth/react';
+import { Session } from 'next-auth';
+
+import Link from 'next/link';
+
+import {
+  useGetGroups,
+  useCreateGroup,
+  useGetGroupUsers,
+} from '@/queries/groups';
+
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import queryClient from '@/queries/queryclient';
+
+import { useEffect, useMemo, useState } from 'react';
+
+import CreateGroupForm from '@/components/Create_Group_Form';
+
+import GroupPad from '@/components/GroupMemberDropdown';
+
+import GroupStore from '@/components/GroupStore';
+import { FetchedGroup } from '@/types/bets_and_odds';
+
+//import react/fa-icons for dropdown and up and down arrows
+import { FaAngleDown, FaAngleUp } from 'react-icons/fa';
+
+//import icons that show leadership role (maybe crown), and then a regular user icon
+import { FaCrown, FaUser } from 'react-icons/fa';
+
+const HomeWithSessionProvider = () => {
+  const sessionProviderProps: SessionProviderProps = {
+    children: <HomeWithQueryProvider />,
+  };
+
+  return <SessionProvider {...sessionProviderProps} />;
+};
+
+const HomeWithQueryProvider = () => {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <QueryClientProvider client={queryClient}>
+      <Home />
+    </QueryClientProvider>
+  );
+};
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+function Home() {
+  //if not authenticated, login to keycloak provider
+  //const { data: session } = useSession() as { data: Session | null };
+  const { data: session, status } = useSession();
+
+  console.log('session', session);
+
+  //set to dark mode
+  useEffect(() => {
+    document.body.classList.add('dark');
+  }, []);
+
+  useEffect(() => {
+    //set local storage bearer token
+    if (typeof window !== 'undefined' && session) {
+      localStorage.setItem('accessToken', session.accessToken as string);
+      //set date_redeemed -> store unix timestamp
+      const now_time = Date.now();
+      const unix_time = Math.floor(now_time / 1000);
+
+      localStorage.setItem('date_redeemed', unix_time.toString());
+    }
+  }, [session]);
+
+  if (!session) {
+    return (
+      <div className="grid place-items-center h-screen">
+        <button
+          onClick={() => signIn('keycloak')}
+          className="p-4 bg-blue-500 text-white rounded-lg shadow-md"
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          Login
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col p-4 dark:bg-black">
+      <ListOfGroupsComponent />
     </div>
   );
 }
+
+const ListOfGroupsComponent = () => {
+  const { data: groups, isLoading, isError, error } = useGetGroups();
+
+  const openCreateGroup = () => {
+    GroupStore.setState({ adding_group: true });
+  };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (isError) {
+    return <div>Error: </div>;
+  }
+
+  return (
+    <div className="p-4 flex flex-col items-center dark:bg-gray-800">
+      <h1 className="text-2xl font-bold mb-4 dark:text-white">Add a Group</h1>
+      <button
+        onClick={openCreateGroup}
+        className="mb-4 p-2 bg-blue-500 text-white rounded dark:text-black"
+      >
+        Create Group
+      </button>
+
+      <div className="w-full max-w-md">
+        <CreateGroupForm />
+      </div>
+
+      <h1 className="text-2xl font-bold mb-4 dark:text-white">Groups</h1>
+      <ul className="w-full max-w-md space-y-4 flex flex-wrap flex-row">
+        {groups?.map((group) => (
+          <li
+            key={group.group_id}
+            className="flex flex-wrap p-4 border rounded bg-white dark:bg-gray-600 shadow-md w-full max-w-1/2"
+          >
+            <Link href={`/group/${group.group_id}`}>{group.group_name}</Link>
+            <GroupPad group={group} />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export default HomeWithSessionProvider;

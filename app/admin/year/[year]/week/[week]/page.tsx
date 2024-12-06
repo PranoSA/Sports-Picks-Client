@@ -7,9 +7,14 @@
  *
  */
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
-import { useGetGames, useAddGames, useDeleteGame } from '@/queries/games';
+import {
+  useGetGames,
+  useAddGames,
+  useDeleteGame,
+  useSubmitScoreForGame,
+} from '@/queries/games';
 
 import { QueryClientProvider } from '@tanstack/react-query';
 
@@ -60,6 +65,8 @@ const GamesPage: React.FC<{
 
   const { data: games, isLoading, isError, error } = useGetGames(year, week);
 
+  const submitScoreForGame = useSubmitScoreForGame();
+
   const addGame = () => {
     /*setGames([...games, newGame]);
     setNewGame({
@@ -106,6 +113,11 @@ const GamesPage: React.FC<{
     });
   };
 
+  //set to dark mode
+  useEffect(() => {
+    document.body.classList.add('dark');
+  }, []);
+
   const editGame = (index: number, updatedGame: FetchedGame) => {
     if (!games) {
       return;
@@ -115,6 +127,24 @@ const GamesPage: React.FC<{
       i === index ? updatedGame : game
     );
     //setGames(updatedGames);
+  };
+
+  //game-id
+  const [gametoScore, setGameToScore] = useState<string | null>(null);
+  const [home_team_score, setHomeTeamScore] = useState<number>(0);
+  const [away_team_score, setAwayTeamScore] = useState<number>(0);
+  const submitGameScore = (
+    game_id: string,
+    home_score: number,
+    away_score: number
+  ) => {
+    submitScoreForGame.mutate({
+      game_id,
+      final_score: {
+        home_score,
+        away_score,
+      },
+    });
   };
 
   if (isLoading) {
@@ -128,6 +158,77 @@ const GamesPage: React.FC<{
   if (!games) {
     return <div>No games found</div>;
   }
+
+  const moneyLineString = (game: FetchedGame) => {
+    {
+      /* For Moneyline - write the moneyline score
+                    
+                      For positive moneyline - that means the home team is not the favorite
+
+                      So if the home team wins, then it should output:
+
+                      so if its +250, it means you get a 
+                      350/100 = 3.5 times your bet
+
+                      So this should output -> {game.home_team} - 350%
+
+                      
+                      If the road teams wins, it means you should output:
+
+                      100/(350+100) = 0.2857
+
+                      If its a negative moneyline - you should do the opposite
+                      If the home team wins, you should output:
+
+                      100/(abs(moneyline) + 100) = 0.2857
+
+                      If the road team wins, you should output:
+
+                      abs(moneyline)/100 = 3.5
+
+
+                    */
+
+      if (game.moneyline > 0) {
+        // tell which team won
+        if (game.home_team_score > game.away_team_score) {
+          //if positive, means home team is not the favorite
+          //so return should be greather than 1
+          const moneyLineReturn = Math.round(game.moneyline);
+
+          return `${game.home_team} - ${moneyLineReturn}%`;
+        }
+        if (game.away_team_score > game.home_team_score) {
+          //if positive, means home team is not the favorite
+          //so return should be greather than 1
+          const moneyLineReturn = Math.round(
+            (100 / (game.moneyline + 100)) * 100
+          );
+
+          return `${game.away_team} - ${moneyLineReturn}%`;
+        }
+      }
+      if (game.moneyline < 0) {
+        // tell which team won
+        if (game.home_team_score > game.away_team_score) {
+          //if negative, means home team is the favorite
+          //so return should be less than 1
+          const moneyLineReturn = Math.round(
+            (100 / (Math.abs(game.moneyline) + 100)) * 100
+          );
+
+          return `${game.home_team} - ${moneyLineReturn}%`;
+        }
+        if (game.away_team_score > game.home_team_score) {
+          //if negative, means home team is the favorit
+          //so return should be less than 1
+          const moneyLineReturn = Math.round(Math.abs(game.moneyline) + 100);
+
+          return `${game.away_team} - ${moneyLineReturn}%`;
+        }
+      }
+    }
+  };
 
   return (
     <div className="p-4 flex flex-col items-center">
@@ -336,36 +437,219 @@ const GamesPage: React.FC<{
             key={index}
             className="p-4 border rounded flex justify-between items-center bg-white dark:bg-gray-800 shadow-md"
           >
-            <span>
-              {game.away_team}@{game.home_team} - Odds:{' '}
-              {game.spread > 0
-                ? `${game.home_team}-${game.spread}`
-                : `${game.away_team}-${game.spread}`}{' '}
-              - Over/Under: {game.over_under} - Kickoff:{' '}
-              {game.kickoff.toLocaleDateString()} @{' '}
-              {game.kickoff.toLocaleTimeString()}
-            </span>
-            <button
-              className="p-2 bg-yellow-500 text-white rounded"
-              onClick={() =>
-                editGame(index, {
-                  ...game,
-                  home_team: game.home_team,
-                  away_team: game.away_team,
-                  spread: parseFloat(
-                    prompt('New odds:', game.spread.toString()) ||
-                      game.spread.toString()
-                  ),
-                  over_under: parseFloat(
-                    prompt('New over/under:', game.over_under.toString()) ||
-                      game.over_under.toString()
-                  ),
-                  moneyline: 0,
-                })
-              }
-            >
-              Edit
-            </button>
+            <div className="flex flex-col dark:bg-gray-800">
+              <span className="text-lg font-semibold mb- 2">
+                {game.away_team} @ {game.home_team}
+              </span>
+              <div className="mb-2">
+                <span className="font-semibold">Odds:</span>
+                <div>
+                  {game.spread > 0
+                    ? `${game.home_team} +${game.spread}`
+                    : `${game.home_team} -${Math.abs(game.spread)}`}
+                </div>
+              </div>
+              <div className="mb-2">
+                <span className="font-semibold">Moneyline:</span>
+                <div>{game.moneyline}</div>
+              </div>
+              <div className="mb-2">
+                <span className="font-semibold">Kickoff:</span>
+                <div>
+                  {game.kickoff.toLocaleDateString()} @{' '}
+                  {game.kickoff.toLocaleTimeString()}
+                </div>
+              </div>
+              {!game.finished && (
+                <div className="flex gap-2 mt-2">
+                  <button
+                    className="p-2 bg-yellow-500 text-white rounded"
+                    onClick={() =>
+                      editGame(index, {
+                        ...game,
+                        home_team: game.home_team,
+                        away_team: game.away_team,
+                        spread: parseFloat(
+                          prompt('New odds:', game.spread.toString()) ||
+                            game.spread.toString()
+                        ),
+                        over_under: parseFloat(
+                          prompt(
+                            'New over/under:',
+                            game.over_under.toString()
+                          ) || game.over_under.toString()
+                        ),
+                        moneyline: 0,
+                      })
+                    }
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="p-2 bg-green-500 text-white rounded"
+                    onClick={() => setGameToScore(game.game_id)}
+                  >
+                    Score
+                  </button>
+                </div>
+              )}
+              {game.finished && (
+                <div className="mt-2">
+                  <div className="text-green-500 dark:text-green-500">
+                    <h2 className="font-semibold">Final Score</h2>
+                    <button
+                      className="p-2 bg-green-500 text-white rounded"
+                      onClick={() => setGameToScore(game.game_id)}
+                    >
+                      Score
+                    </button>
+                    <div>
+                      {game.home_team}: {game.home_team_score}
+                    </div>
+                    <div>
+                      {game.away_team}: {game.away_team_score}
+                    </div>
+                  </div>
+                  <div className="mt-2">
+                    <span className="font-semibold">Odds:</span>
+                    <div
+                      //green text if the home team covered the spread
+                      //this means if the home_team_score - spread > away_team_score
+                      className={
+                        game.home_team_score - game.spread >
+                        game.away_team_score
+                          ? 'text-green-500 dark:text-green-500'
+                          : 'text-red-500 dark:text-red-500'
+                      }
+                    >
+                      {game.spread > 0
+                        ? `${game.home_team} +${game.spread}`
+                        : `${game.home_team} -${Math.abs(game.spread)}`}
+                    </div>
+                    <div
+                      //green text if the  road team covered the spread
+                      //this means if the away_team_score + spread > home_team_score
+                      className={
+                        game.away_team_score + game.spread >
+                        game.home_team_score
+                          ? 'text-green-500 dark:text-green-500'
+                          : 'text-red-500 dark:text-red-500'
+                      }
+                    >
+                      {game.spread < 0
+                        ? `${game.away_team} +${game.spread}`
+                        : `${game.away_team} -${Math.abs(game.spread)}`}
+                    </div>
+                  </div>
+                  <div className="mt-2">
+                    {/* For Moneyline - write the moneyline score
+                    
+                      For positive moneyline - that means the home team is not the favorite
+
+                      So if the home team wins, then it should output:
+
+                      so if its +250, it means you get a 
+                      350/100 = 3.5 times your bet
+
+                      So this should output -> {game.home_team} - 350%
+
+                      
+                      If the road teams wins, it means you should output:
+
+                      100/(350+100) = 0.2857
+
+                      If its a negative moneyline - you should do the opposite
+                      If the home team wins, you should output:
+
+                      100/(abs(moneyline) + 100) = 0.2857
+
+                      If the road team wins, you should output:
+
+                      abs(moneyline)/100 = 3.5
+
+
+                    */}
+                    <span className="font-semibold">
+                      <h2>Moneyline:</h2>
+                      {moneyLineString(game)}
+                    </span>
+                    <div>{}</div>
+                    {/* over under -
+                    
+                      should write Over or Under (made it)
+
+                      */}
+                    {game.home_team_score + game.away_team_score >
+                    game.over_under ? (
+                      <>
+                        <div className="text-green-500 dark:text-green-500">
+                          Over - {game.home_team_score + game.away_team_score} /{' '}
+                          {game.over_under}
+                        </div>
+                        <div className="text-red-500 dark:text-red-500">
+                          Under - {game.home_team_score + game.away_team_score}{' '}
+                          / {game.over_under}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="text-red-500 dark:text-red-500">
+                          Over - {game.home_team_score + game.away_team_score} /{' '}
+                          {game.over_under}
+                        </div>
+                        <div className="text-green-500 dark:text-green-500">
+                          Under - {game.home_team_score + game.away_team_score}{' '}
+                          / {game.over_under}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {gametoScore === game.game_id && (
+              <div className="flex gap-4">
+                <input
+                  type="number"
+                  placeholder="Home Score"
+                  step={1}
+                  min={0}
+                  className="dark:text-gray-800"
+                  value={home_team_score}
+                  onChange={(e) => {
+                    setHomeTeamScore(parseInt(e.target.value, 10));
+                  }}
+                />
+                <input
+                  type="number"
+                  step={1}
+                  min={0}
+                  placeholder="Away Score"
+                  className="dark:text-gray-800"
+                  value={away_team_score}
+                  onChange={(e) => {
+                    setAwayTeamScore(parseInt(e.target.value, 10));
+                  }}
+                />
+                <button
+                  className="p-2 bg-green-500 text-white rounded"
+                  onClick={() => {
+                    submitGameScore(
+                      game.game_id,
+                      home_team_score,
+                      away_team_score
+                    );
+
+                    setGameToScore(null);
+                    setHomeTeamScore(0);
+                    setAwayTeamScore(0);
+                  }}
+                >
+                  Submit
+                </button>
+              </div>
+            )}
           </li>
         ))}
       </ul>

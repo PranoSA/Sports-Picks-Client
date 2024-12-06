@@ -16,6 +16,8 @@ import { useEffect, useState } from 'react';
 
 //trash icon
 import { FaTrash, FaPlus, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+//import "go to" or "visit" icon
+import { FaArrowRight } from 'react-icons/fa';
 
 import { useAddWeeks, useGetWeeks, useDeleteWeek } from '@/queries/weeks';
 import { FetchedWeek, InsertionWeek } from '@/types/bets_and_odds';
@@ -200,6 +202,11 @@ const WeekDisplay: React.FC<{ year_id: string }> = ({ year_id }) => {
 
   const [editedWeek, setEditedWeek] = useState<null | FetchedWeek>(null);
 
+  //set to dark mode
+  useEffect(() => {
+    document.body.classList.add('dark');
+  }, []);
+
   const setweek_name = (week_name: string) => {
     if (!editedWeek) {
       return;
@@ -240,8 +247,14 @@ const WeekDisplay: React.FC<{ year_id: string }> = ({ year_id }) => {
               {week.end_date.toDateString()})
             </span>
 
-            <Link href={`/admin/year/${year_id}/week/${week.week_id}`}>
-              <FaCheckCircle />
+            <Link
+              href={`/admin/year/${year_id}/week/${week.week_id}`}
+              className="p-4"
+            >
+              <FaArrowRight
+                className=" text-white  dark:text-neonPurple cursor-pointer"
+                size={32}
+              />
             </Link>
             <button
               className="p-2 bg-red-500 text-white rounded"

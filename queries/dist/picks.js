@@ -43,9 +43,12 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
     return r;
 };
 exports.__esModule = true;
-exports.useGetPicks = exports.useAddPicks = void 0;
+exports.useGetPicksByWeekId = exports.useGetPicks = exports.useAddPicks = void 0;
 var react_query_1 = require("@tanstack/react-query");
 var queryclient_1 = require("./queryclient");
+var getToken = function () {
+    return localStorage.getItem('accessToken');
+};
 var addPicks = function (picks, groupid) { return __awaiter(void 0, void 0, void 0, function () {
     var url, res;
     return __generator(this, function (_a) {
@@ -55,7 +58,8 @@ var addPicks = function (picks, groupid) { return __awaiter(void 0, void 0, void
                 return [4 /*yield*/, fetch(url, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            Authorization: "Bearer " + getToken()
                         },
                         body: JSON.stringify(picks)
                     })];
@@ -123,3 +127,25 @@ exports.useGetPicks = function (groupid) {
  *
  * Getting Week by week results will be next
  */
+var getPicksByWeekId = function (group_id, week_id) { return __awaiter(void 0, void 0, Promise, function () {
+    var url, res;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                url = process.env.NEXT_PUBLIC_API_URL + "/picks/" + group_id + "/" + week_id;
+                return [4 /*yield*/, fetch(url)];
+            case 1:
+                res = _a.sent();
+                if (!res.ok) {
+                    throw new Error('Network response was not okay');
+                }
+                return [2 /*return*/, res.json()];
+        }
+    });
+}); };
+exports.useGetPicksByWeekId = function (groupid, weekid) {
+    return react_query_1.useQuery({
+        queryKey: ['picks', groupid, weekid],
+        queryFn: function () { return getPicksByWeekId(groupid, weekid); }
+    });
+};

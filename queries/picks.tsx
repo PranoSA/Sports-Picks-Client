@@ -13,6 +13,10 @@ import {
 
 import queryClient from './queryclient';
 
+const getToken = () => {
+  return localStorage.getItem('accessToken');
+};
+
 const addPicks = async (picks: InsertionChoice[], groupid: string) => {
   const url: string = `${process.env.NEXT_PUBLIC_API_URL}/picks/${groupid}`;
 
@@ -20,6 +24,7 @@ const addPicks = async (picks: InsertionChoice[], groupid: string) => {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      Authorization: `Bearer ${getToken()}`,
     },
     body: JSON.stringify(picks),
   });
@@ -66,7 +71,11 @@ export const useAddPicks = (
 const getPicks = async (group_id: string): Promise<FetchedChoice[]> => {
   const url = `${process.env.NEXT_PUBLIC_API_URL}/picks/${group_id}`;
 
-  const res = await fetch(url);
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+    },
+  });
 
   if (!res.ok) {
     throw new Error('Network response was not okay');
@@ -88,3 +97,32 @@ export const useGetPicks = (
  *
  * Getting Week by week results will be next
  */
+
+const getPicksByWeekId = async (
+  group_id: string,
+  week_id: string
+): Promise<FetchedChoice[]> => {
+  const url = `${process.env.NEXT_PUBLIC_API_URL}/picks/${group_id}/${week_id}`;
+
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error('Network response was not okay');
+  }
+
+  return res.json();
+};
+
+export const useGetPicksByWeekId = (
+  groupid: string,
+  weekid: string
+): UseQueryResult<FetchedChoice[], unknown> => {
+  return useQuery({
+    queryKey: ['picks', groupid, weekid],
+    queryFn: () => getPicksByWeekId(groupid, weekid),
+  });
+};

@@ -9,7 +9,7 @@
  */
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import queryClient from '@/queries/queryclient';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -18,6 +18,7 @@ import { useGetYears, useAddYear, useDeleteYear } from '@/queries/years';
 import { InsertionYear } from '@/types/bets_and_odds';
 
 import Link from 'next/link';
+import { FaTrash } from 'react-icons/fa';
 
 const PageWithQuery = () => {
   //wraps Page component with useQuery
@@ -38,6 +39,11 @@ const Page: React.FC = () => {
   const [repeatAmount, setRepeatAmount] = useState<number>(1);
 
   const addYear = useAddYear();
+
+  //set to dark mode
+  useEffect(() => {
+    document.body.classList.add('dark');
+  }, []);
 
   const insertYearsWithRepeat = () => {
     // take the year and repeat ammount
@@ -154,23 +160,47 @@ const ListOfYears: React.FC = () => {
     return <div>No years found</div>;
   }
 
+  const current_year = years.find((year) => {
+    const current_date = new Date();
+    return (
+      new Date(year.start_date) <= current_date &&
+      new Date(year.end_date) >= current_date
+    );
+  });
+
   return (
     <div className="space-y-4">
       {years.map((year) => (
         <div
           key={year.year_id}
-          className="p-4 border rounded dark:bg-gray-800 dark:text-gray-200"
+          className={`p-4 border-4  rounded dark:bg-gray-800 dark:text-gray-200  ${
+            current_year?.year_id === year.year_id
+              ? 'border-neonGreen'
+              : 'border-gray-500'
+          }`}
         >
           <h2 className="text-lg font-semibold">{year.year_id}</h2>
-          <p>Start Date: {year.start_date}</p>
-          <p>End Date: {year.end_date}</p>
-          <button
-            className="p-2 bg-red-500 text-white rounded"
-            onClick={() => handleDelete(year.year_id)}
-          >
-            Delete Year
-          </button>
-          <Link href={`/admin/years/${year.year_id}`}>Visit Year</Link>
+          <p>
+            {' '}
+            {year.start_date.toDateString()} - {year.end_date.toDateString()}
+          </p>
+          <div className="flex flex-row justify-around">
+            <div
+              className="flex flex-row space-y-2 p-2 cursor-pointer dark:text-red"
+              onClick={() => handleDelete(year.year_id)}
+            >
+              <FaTrash className="mr-2 dark:text-red-700" />
+              <h2 className="dark:text-red-700"> Delete Year </h2>
+            </div>
+            <Link href={`/admin/year/${year.year_id}`}>
+              <button className="p-2 text-white rounded dark:text-neonPurple">
+                <p className="dark:text-neonPurple text-neonPink">
+                  {' '}
+                  Visit Year{' '}
+                </p>
+              </button>
+            </Link>
+          </div>
         </div>
       ))}
     </div>

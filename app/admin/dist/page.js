@@ -51,6 +51,7 @@ var queryclient_1 = require("@/queries/queryclient");
 var react_query_1 = require("@tanstack/react-query");
 var years_1 = require("@/queries/years");
 var link_1 = require("next/link");
+var fa_1 = require("react-icons/fa");
 var PageWithQuery = function () {
     //wraps Page component with useQuery
     return (React.createElement(react_query_1.QueryClientProvider, { client: queryclient_1["default"] },
@@ -63,6 +64,10 @@ var Page = function () {
     var _d = react_1.useState([]), yearsToAdd = _d[0], setYearsToAdd = _d[1];
     var _e = react_1.useState(1), repeatAmount = _e[0], setRepeatAmount = _e[1];
     var addYear = years_1.useAddYear();
+    //set to dark mode
+    react_1.useEffect(function () {
+        document.body.classList.add('dark');
+    }, []);
     var insertYearsWithRepeat = function () {
         // take the year and repeat ammount
         // loop through the repeat amount, incrementing the start_date and end_date by 1 year each time
@@ -147,15 +152,29 @@ var ListOfYears = function () {
     if (!years) {
         return React.createElement("div", null, "No years found");
     }
-    return (React.createElement("div", { className: "space-y-4" }, years.map(function (year) { return (React.createElement("div", { key: year.year_id, className: "p-4 border rounded dark:bg-gray-800 dark:text-gray-200" },
+    var current_year = years.find(function (year) {
+        var current_date = new Date();
+        return (new Date(year.start_date) <= current_date &&
+            new Date(year.end_date) >= current_date);
+    });
+    return (React.createElement("div", { className: "space-y-4" }, years.map(function (year) { return (React.createElement("div", { key: year.year_id, className: "p-4 border-4  rounded dark:bg-gray-800 dark:text-gray-200  " + ((current_year === null || current_year === void 0 ? void 0 : current_year.year_id) === year.year_id
+            ? 'border-neonGreen'
+            : 'border-gray-500') },
         React.createElement("h2", { className: "text-lg font-semibold" }, year.year_id),
         React.createElement("p", null,
-            "Start Date: ",
-            year.start_date),
-        React.createElement("p", null,
-            "End Date: ",
-            year.end_date),
-        React.createElement("button", { className: "p-2 bg-red-500 text-white rounded", onClick: function () { return handleDelete(year.year_id); } }, "Delete Year"),
-        React.createElement(link_1["default"], { href: "/admin/years/" + year.year_id }, "Visit Year"))); })));
+            ' ',
+            year.start_date.toDateString(),
+            " - ",
+            year.end_date.toDateString()),
+        React.createElement("div", { className: "flex flex-row justify-around" },
+            React.createElement("div", { className: "flex flex-row space-y-2 p-2 cursor-pointer dark:text-red", onClick: function () { return handleDelete(year.year_id); } },
+                React.createElement(fa_1.FaTrash, { className: "mr-2 dark:text-red-700" }),
+                React.createElement("h2", { className: "dark:text-red-700" }, " Delete Year ")),
+            React.createElement(link_1["default"], { href: "/admin/year/" + year.year_id },
+                React.createElement("button", { className: "p-2 text-white rounded dark:text-neonPurple" },
+                    React.createElement("p", { className: "dark:text-neonPurple text-neonPink" },
+                        ' ',
+                        "Visit Year",
+                        ' ')))))); })));
 };
 exports["default"] = PageWithQuery;

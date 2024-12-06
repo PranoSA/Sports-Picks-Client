@@ -3,9 +3,7 @@ import { JWT } from 'next-auth/jwt';
 import KeycloakProvider from 'next-auth/providers/keycloak';
 import { NextResponse } from 'next/server';
 
-type TokenWithError = JWT & { error?: string };
-
-const refreshAccessToken = async (token: JWT): Promise<TokenWithError> => {
+const refreshAccessToken = async (token: JWT) => {
   try {
     const url = `${process.env.KEYCLOAK_ISSUER_URL}/protocol/openid-connect/token`;
 
@@ -82,49 +80,36 @@ const authOptions: AuthOptions = {
       // Initial sign in
       if (account) {
         token.accessToken = account.access_token;
-        token.accessTokenExpires = (account.expires_at || 0) * 1000;
+        token.accessTokenExpires = account.expires_at || 0 * 1000;
         token.refreshToken = account.refresh_token;
         token.token = account.id_token;
       }
 
       // Initial sign in
       if (account && user) {
-        //check if expires_in exists
-        if (!account.expires_in) {
-          return {
-            error: 'NoExpiresIn',
-          };
-        }
-
         return {
           accessToken: account.accessToken,
-
-          //check if expires_in exists
-
-          accessTokenExpires:
-            Date.now() + (account.expires_in as number) * 1000,
+          //@ts-expect-error: account.expires_in might be undefined
+          //add a month to the current date
+          //next-auth should expire the token after a month
+          accessTokenExpires: Date.now() + account.expires_in * 1000,
           refreshToken: account.refresh_token,
           user,
         };
       }
 
       // Return previous token if the access token has not expired yet
-      if (!token.accessTokenExpires) {
-        return token;
-      }
-
-      if (
-        typeof token.accessTokenExpires === 'number' &&
-        Date.now() < token.accessTokenExpires
-      ) {
+      //@ts-expect-error: token.accessTokenExpires might be undefined
+      if (Date.now() < token.accessTokenExpires) {
         return token;
       }
 
       //if refresh token is expires, log out
 
       // Access token has expired, try to update it
-      const extrapolated = await refreshAccessToken(token);
+      const extrapolated = refreshAccessToken(token);
 
+      //@ts-expect-error: token.accessTokenExpires might be undefined
       if (extrapolated.error) {
         //log user out
         return {

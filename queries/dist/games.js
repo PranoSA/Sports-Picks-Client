@@ -54,7 +54,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
     return r;
 };
 exports.__esModule = true;
-exports.useGetCurrentWeekGames = exports.useDeleteGame = exports.useAddGames = exports.useGetGames = void 0;
+exports.useSubmitScoreForGame = exports.useGetCurrentWeekGames = exports.useDeleteGame = exports.useAddGames = exports.useGetGames = void 0;
 var react_query_1 = require("@tanstack/react-query");
 var queryclient_1 = require("./queryclient");
 /**
@@ -69,13 +69,20 @@ var create_game_key = function (year_id, week_id) { return [
     year_id,
     week_id,
 ]; };
+var getToken = function () {
+    return localStorage.getItem('accessToken');
+};
 var getGames = function (year_id, week_id) { return __awaiter(void 0, void 0, void 0, function () {
     var url, res, data;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 url = process.env.NEXT_PUBLIC_API_URL + "/games/" + year_id + "/" + week_id;
-                return [4 /*yield*/, fetch(url)];
+                return [4 /*yield*/, fetch(url, {
+                        headers: {
+                            Authorization: "Bearer " + getToken()
+                        }
+                    })];
             case 1:
                 res = _a.sent();
                 if (!res.ok) {
@@ -116,7 +123,8 @@ var addGames = function (games) { return __awaiter(void 0, void 0, void 0, funct
                 return [4 /*yield*/, fetch(url, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            Authorization: "Bearer " + getToken()
                         },
                         body: JSON.stringify(games)
                     })];
@@ -160,7 +168,10 @@ var deleteGame = function (game_id) { return __awaiter(void 0, void 0, void 0, f
             case 0:
                 url = process.env.NEXT_PUBLIC_API_URL + "/games/" + game_id;
                 return [4 /*yield*/, fetch(url, {
-                        method: 'DELETE'
+                        method: 'DELETE',
+                        headers: {
+                            Authorization: "Bearer " + getToken()
+                        }
                     })];
             case 1:
                 res = _a.sent();
@@ -200,7 +211,11 @@ var getCurrentWeekGames = function () { return __awaiter(void 0, void 0, void 0,
         switch (_a.label) {
             case 0:
                 url = process.env.NEXT_PUBLIC_API_URL + "/games/current";
-                return [4 /*yield*/, fetch(url)];
+                return [4 /*yield*/, fetch(url, {
+                        headers: {
+                            Authorization: "Bearer " + getToken()
+                        }
+                    })];
             case 1:
                 res = _a.sent();
                 if (!res.ok) {
@@ -219,5 +234,59 @@ exports.useGetCurrentWeekGames = function () {
     return react_query_1.useQuery({
         queryKey: ['current_week_games'],
         queryFn: getCurrentWeekGames
+    });
+};
+var submitScoreForGame = function (game_id, final_score) { return __awaiter(void 0, void 0, void 0, function () {
+    var url, res;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                url = process.env.NEXT_PUBLIC_API_URL + "/games/" + game_id;
+                return [4 /*yield*/, fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: "Bearer " + getToken()
+                        },
+                        body: JSON.stringify(final_score)
+                    })];
+            case 1:
+                res = _a.sent();
+                if (!res.ok) {
+                    throw new Error('Network response was not okay');
+                }
+                return [2 /*return*/, res.json()];
+        }
+    });
+}); };
+exports.useSubmitScoreForGame = function () {
+    return react_query_1.useMutation({
+        mutationFn: function (_a) {
+            var game_id = _a.game_id, final_score = _a.final_score;
+            return __awaiter(void 0, void 0, void 0, function () {
+                var new_game;
+                return __generator(this, function (_b) {
+                    switch (_b.label) {
+                        case 0: return [4 /*yield*/, submitScoreForGame(game_id, final_score)];
+                        case 1:
+                            new_game = _b.sent();
+                            return [2 /*return*/, new_game];
+                    }
+                });
+            });
+        },
+        onSuccess: function (newGame) {
+            var old_games = queryclient_1["default"].getQueryData(create_game_key(newGame.year_id, newGame.week_id));
+            if (!old_games) {
+                return;
+            }
+            var games_now = old_games.map(function (game) {
+                if (game.game_id === newGame.game_id) {
+                    return newGame;
+                }
+                return game;
+            });
+            queryclient_1["default"].setQueryData(create_game_key(newGame.year_id, newGame.week_id), games_now);
+        }
     });
 };

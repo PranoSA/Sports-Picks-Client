@@ -14,6 +14,10 @@ import { FetchedYear, InsertionYear } from '@/types/bets_and_odds';
 
 import queryClient from './queryclient';
 
+const getToken = () => {
+  return localStorage.getItem('accessToken');
+};
+
 export function useGetYears() {
   return useQuery<FetchedYear[]>({
     queryKey: ['years'],
@@ -27,14 +31,33 @@ export function useGetYears() {
 const fetchYears = async (): Promise<FetchedYear[]> => {
   const url = `${process.env.NEXT_PUBLIC_API_URL}/years`;
 
-  const res = await fetch(url);
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+    },
+  });
 
   // if the response is not ok, throw an error
   if (!res.ok) {
     throw new Error('Network response was not ok');
   }
 
-  return res.json();
+  type YearFromServer = FetchedYear & { start_date: string; end_date: string };
+
+  const years_with_string_dates = (await res.json()) as YearFromServer[];
+
+  // convert the string dates to Date objects
+  const years = years_with_string_dates.map((year) => {
+    return {
+      ...year,
+      start_date: new Date(year.start_date),
+      end_date: new Date(year.end_date),
+    };
+  });
+
+  return years;
+
+  //return res.json();
 };
 
 const addYears = async (years: InsertionYear[]): Promise<FetchedYear[]> => {

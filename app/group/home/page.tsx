@@ -38,7 +38,7 @@ function GroupsPage() {
       <ul>
         {data.map((group) => (
           <li key={group.group_id}>
-            <Link href={`/group/${group.group_id}`}>{group.name}</Link>
+            <Link href={`/group/${group.group_id}`}>{group.group_name}</Link>
           </li>
         ))}
       </ul>

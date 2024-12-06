@@ -48,8 +48,8 @@ type InsertionYear = {
 
 type FetchedYear = {
   year_id: string;
-  start_date: string;
-  end_date: string;
+  start_date: Date;
+  end_date: Date;
 };
 
 type Week = {
@@ -113,6 +113,9 @@ type FetchedGame = {
   over_under: number;
   moneyline: number;
   kickoff: Date;
+  finished: boolean;
+  home_team_score: number;
+  away_team_score: number;
 };
 
 type Group = {
@@ -123,7 +126,7 @@ type Group = {
 
 type InsertionGroup = {
   group_name: string;
-  year_id: string;
+
   bets: Bet[];
 };
 
@@ -146,6 +149,18 @@ type InsertionGroup_User = {
   user_id: string;
   user_name: string;
   position: 'admin' | 'member';
+};
+
+type FetchedGroup_User = {
+  group_id: string;
+  user_id: string;
+  user_name: string;
+  position: 'admin' | 'member';
+};
+
+type JoinGroup = {
+  group_id: string;
+  passcode: string;
 };
 
 type Bet = {
@@ -184,17 +199,16 @@ type Choice = {
 
 type InsertionChoice = {
   bet_id: number; //index of the bet in the group
-  game_id: number;
-  user_id: string;
-  choice: boolean;
+  game_id: string;
+  pick: boolean;
 };
 
 type FetchedChoice = {
   pick_id: string;
   bet_id: number;
-  game_id: number;
+  game_id: string;
   username: string;
-  choice: boolean;
+  pick: boolean;
 };
 
 export type {
@@ -211,6 +225,9 @@ export type {
   Group,
   FetchedGroup,
   InsertionGroup,
+  FetchedGroup_User,
+  InsertionGroup_User,
+  JoinGroup,
   Bet,
   Choice,
   InsertionChoice,

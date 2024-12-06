@@ -11,6 +11,10 @@ import queryClient from './queryclient';
 
 const getKey = (year_id: string) => ['weeks', year_id];
 
+const getToken = () => {
+  return localStorage.getItem('accessToken');
+};
+
 const AddWeeks = async (weeks: InsertionWeek[]) => {
   const url = `${process.env.NEXT_PUBLIC_API_URL}/weeks`;
 
@@ -64,7 +68,11 @@ export function useAddWeeks() {
 const getWeeks = async (year_id: string) => {
   const url = `${process.env.NEXT_PUBLIC_API_URL}/weeks/${year_id}`;
 
-  const res = await fetch(url);
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+    },
+  });
 
   if (!res.ok) {
     throw new Error('Network response was not okay');
@@ -165,5 +173,52 @@ export function useDeleteWeek() {
 
       queryClient.setQueryData(getKey(deletedWeek.year_id), newWeeks);
     },
+  });
+}
+
+const getWeeksForCurrentYear = async () => {
+  const url = `${process.env.NEXT_PUBLIC_API_URL}/weeks/current_year`;
+
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error('Network response was not okay');
+  }
+
+  type ServerResponseWeek = FetchedWeek & {
+    start_date: string;
+    end_date: string;
+  };
+
+  const data = (await res.json()) as ServerResponseWeek[];
+
+  console.log('data', data);
+
+  const weeks: FetchedWeek[] = data.map((week) => {
+    return {
+      week_id: week.week_id,
+      year_id: week.year_id,
+      week_name: week.week_name,
+      start_date: new Date(week.start_date),
+      end_date: new Date(week.end_date),
+    };
+  });
+
+  console.log('weeks', weeks);
+
+  return weeks;
+};
+
+export function useGetWeeksForCurrentYear(): UseQueryResult<
+  FetchedWeek[],
+  unknown
+> {
+  return useQuery({
+    queryKey: ['weeks', 'current_year'],
+    queryFn: getWeeksForCurrentYear,
   });
 }
