@@ -47,10 +47,13 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
     return r;
 };
 exports.__esModule = true;
-exports.useDeleteWeek = exports.useGetWeeks = exports.useAddWeeks = void 0;
+exports.useGetWeeksForCurrentYear = exports.useDeleteWeek = exports.useGetWeeks = exports.useAddWeeks = void 0;
 var react_query_1 = require("@tanstack/react-query");
 var queryclient_1 = require("./queryclient");
 var getKey = function (year_id) { return ['weeks', year_id]; };
+var getToken = function () {
+    return localStorage.getItem('accessToken');
+};
 var AddWeeks = function (weeks) { return __awaiter(void 0, void 0, void 0, function () {
     var url, res, data;
     return __generator(this, function (_a) {
@@ -61,7 +64,8 @@ var AddWeeks = function (weeks) { return __awaiter(void 0, void 0, void 0, funct
                 return [4 /*yield*/, fetch(url, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            Authorization: "Bearer " + getToken()
                         },
                         body: JSON.stringify(weeks)
                     })];
@@ -111,7 +115,11 @@ var getWeeks = function (year_id) { return __awaiter(void 0, void 0, void 0, fun
         switch (_a.label) {
             case 0:
                 url = process.env.NEXT_PUBLIC_API_URL + "/weeks/" + year_id;
-                return [4 /*yield*/, fetch(url)];
+                return [4 /*yield*/, fetch(url, {
+                        headers: {
+                            Authorization: "Bearer " + getToken()
+                        }
+                    })];
             case 1:
                 res = _a.sent();
                 if (!res.ok) {
@@ -201,3 +209,44 @@ function useDeleteWeek() {
     });
 }
 exports.useDeleteWeek = useDeleteWeek;
+var getWeeksForCurrentYear = function () { return __awaiter(void 0, void 0, void 0, function () {
+    var url, res, data, weeks;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                url = process.env.NEXT_PUBLIC_API_URL + "/weeks/current_year";
+                return [4 /*yield*/, fetch(url, {
+                        headers: {
+                            Authorization: "Bearer " + getToken()
+                        }
+                    })];
+            case 1:
+                res = _a.sent();
+                if (!res.ok) {
+                    throw new Error('Network response was not okay');
+                }
+                return [4 /*yield*/, res.json()];
+            case 2:
+                data = (_a.sent());
+                console.log('data', data);
+                weeks = data.map(function (week) {
+                    return {
+                        week_id: week.week_id,
+                        year_id: week.year_id,
+                        week_name: week.week_name,
+                        start_date: new Date(week.start_date),
+                        end_date: new Date(week.end_date)
+                    };
+                });
+                console.log('weeks', weeks);
+                return [2 /*return*/, weeks];
+        }
+    });
+}); };
+function useGetWeeksForCurrentYear() {
+    return react_query_1.useQuery({
+        queryKey: ['weeks', 'current_year'],
+        queryFn: getWeeksForCurrentYear
+    });
+}
+exports.useGetWeeksForCurrentYear = useGetWeeksForCurrentYear;

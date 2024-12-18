@@ -24,6 +24,7 @@ const AddWeeks = async (weeks: InsertionWeek[]) => {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      Authorization: `Bearer ${getToken()}`,
     },
     body: JSON.stringify(weeks),
   });

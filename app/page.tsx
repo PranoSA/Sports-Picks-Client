@@ -13,6 +13,8 @@ import { Session } from 'next-auth';
 
 import Link from 'next/link';
 
+import Use_is_admin from '@/queries/admin';
+
 import {
   useGetGroups,
   useCreateGroup,
@@ -77,21 +79,38 @@ function Home() {
     }
   }, [session]);
 
+  const { data: is_admin } = Use_is_admin();
+
+  console.log('Is Admin?', is_admin?.is_admin);
+
   if (!session) {
     return (
-      <div className="grid place-items-center h-screen">
-        <button
-          onClick={() => signIn('keycloak')}
-          className="p-4 bg-blue-500 text-white rounded-lg shadow-md"
-        >
-          Login
-        </button>
+      <div className="grid place-items-center h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+        <div className="text-center p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md">
+          <h1 className="text-3xl font-bold mb-4">
+            Welcome to Sports Betting App
+          </h1>
+          <p className="mb-6">
+            This app allows you to create groups, make choices, and track your
+            bets. Join now and start making your picks!
+          </p>
+          <button
+            onClick={() => signIn('keycloak')}
+            className="p-4 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 transition duration-300"
+          >
+            Login
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col p-4 dark:bg-black">
+      {
+        //if is admin, show admin panel
+        is_admin?.is_admin && <AdminPanel />
+      }
       <ListOfGroupsComponent />
     </div>
   );
@@ -138,6 +157,28 @@ const ListOfGroupsComponent = () => {
           </li>
         ))}
       </ul>
+    </div>
+  );
+};
+
+const AdminPanel: React.FC = () => {
+  /**
+   * All this panel will do will have a a link to /admin/year
+   *
+   *
+   *
+   */
+
+  return (
+    <div className="flex flex-col p-4 dark:bg-black">
+      <Link
+        href="/admin"
+        className="
+        cursor
+        hover:bg-blue-500 hover:text-white p-2 rounded-lg shadow-md bg-blue-400 text-white"
+      >
+        <h1 className="text-2xl font-bold mb-4 dark:text-white">Admin Panel</h1>
+      </Link>
     </div>
   );
 };

@@ -130,9 +130,9 @@ const GamesPage: React.FC<{
   };
 
   //game-id
-  const [gametoScore, setGameToScore] = useState<string | null>(null);
-  const [home_team_score, setHomeTeamScore] = useState<number>(0);
-  const [away_team_score, setAwayTeamScore] = useState<number>(0);
+  const [gametoScore, setgametoScore] = useState<string | null>(null);
+  const [home_team_score, sethome_team_score] = useState<number>(0);
+  const [away_team_score, setaway_team_score] = useState<number>(0);
   const submitGameScore = (
     game_id: string,
     home_score: number,
@@ -231,9 +231,9 @@ const GamesPage: React.FC<{
   };
 
   return (
-    <div className="p-4 flex flex-col items-center">
+    <div className="p-4 flex flex-col items-center dark:bg-gray-900 min-h-screen">
       <form
-        className="w-full max-w-lg flex flex-col gap-4 mb-4 p-4 bg-white dark:bg-gray-800 rounded shadow-md"
+        className="w-full max-w-lg flex flex-col gap-4 mb-4 p-4 bg-gray-800 text-gray-100 rounded shadow-md"
         onSubmit={(e) => {
           e.preventDefault();
           addGame();
@@ -243,7 +243,7 @@ const GamesPage: React.FC<{
           <div className="flex flex-col w-1/2">
             <label className="mb-2">Road Team</label>
             <input
-              className="p-2 border rounded"
+              className="p-2 border rounded bg-gray-700 text-gray-100"
               type="text"
               placeholder="Road Team"
               value={newGame.away_team}
@@ -258,7 +258,7 @@ const GamesPage: React.FC<{
           <div className="flex flex-col w-1/2">
             <label className="mb-2">Home Team</label>
             <input
-              className="p-2 border rounded"
+              className="p-2 border rounded bg-gray-700 text-gray-100"
               type="text"
               placeholder="Home Team"
               value={newGame.home_team}
@@ -270,7 +270,7 @@ const GamesPage: React.FC<{
         </div>
         <label className="mb-2">Odds</label>
         <input
-          className="p-2 border rounded dark:text-gray-800"
+          className="p-2 border rounded bg-gray-700 text-gray-100"
           type="number"
           placeholder="Odds"
           step={0.5}
@@ -281,7 +281,7 @@ const GamesPage: React.FC<{
         />
         <label className="mb-2">Over/Under</label>
         <input
-          className="p-2 border rounded dark:text-gray-800"
+          className="p-2 border rounded bg-gray-700 text-gray-100"
           type="number"
           placeholder="Over/Under"
           value={newGame.over_under}
@@ -289,21 +289,13 @@ const GamesPage: React.FC<{
             setNewGame({ ...newGame, over_under: parseFloat(e.target.value) })
           }
         />
-        {/* Here you set the moneyline
-        It is driven by 2 inputs, depedent on each other
-        So a changein one will change the other
-        Change Home Team Moneyline - directly updates the game.moneyline
-        Change Road Team Moneyline - it is not direct
-        It is calculated by the formula
-        away_team_moneyline = -1 * (moneyline * (odds / 100))
-        */}
         <label className="mb-2">Home Team Moneyline</label>
         <div className="flex gap-4">
           <div className="flex flex-col w-1/2">
             <label className="mb-2">Home Team Moneyline</label>
             <input
               type="number"
-              className="p-2 border rounded dark:bg-gray-800 dark:text-gray-200"
+              className="p-2 border rounded bg-gray-700 text-gray-100"
               value={newGame.moneyline}
               onChange={(e) => {
                 const homeTeamMoneyline = parseInt(e.target.value, 10);
@@ -320,11 +312,9 @@ const GamesPage: React.FC<{
             <label className="mb-2">Road Team Moneyline</label>
             <input
               type="number"
-              className="p-2 border rounded dark:bg-gray-800 dark:text-gray-200"
+              className="p-2 border rounded bg-gray-700 text-gray-100"
               value={0 - newGame.moneyline}
               onChange={(e) => {
-                console.log(e.target.value);
-
                 const roadTeamMoneyline = parseInt(e.target.value, 10);
                 if (Math.abs(roadTeamMoneyline) > 100) {
                   setNewGame({
@@ -366,7 +356,7 @@ const GamesPage: React.FC<{
           <div className="flex flex-col">
             <label className="mb-2">Date</label>
             <input
-              className="p-2 border rounded dark:text-gray-800"
+              className="p-2 border rounded bg-gray-700 text-gray-100"
               type="date"
               value={`${newGame.kickoff.getFullYear()}-${(
                 newGame.kickoff.getMonth() + 1
@@ -392,7 +382,7 @@ const GamesPage: React.FC<{
           <div className="flex flex-col">
             <label className="mb-2">Hour</label>
             <input
-              className="p-2 border rounded dark:text-gray-800"
+              className="p-2 border rounded bg-gray-700 text-gray-100"
               type="number"
               min="1"
               max="12"
@@ -403,7 +393,7 @@ const GamesPage: React.FC<{
           <div className="flex flex-col">
             <label className="mb-2">Minute</label>
             <input
-              className="p-2 border rounded dark:text-gray-800"
+              className="p-2 border rounded bg-gray-700 text-gray-100"
               type="number"
               min="0"
               max="59"
@@ -415,7 +405,7 @@ const GamesPage: React.FC<{
           <div className="flex flex-col">
             <label className="mb-2">AM/PM</label>
             <select
-              className="p-2 border rounded dark:text-gray-800"
+              className="p-2 border rounded bg-gray-700 text-gray-100"
               value={newGame.kickoff.getHours() < 12 ? 'AM' : 'PM'}
               onChange={(e) => handleTimeChange('ampm', e.target.value)}
             >
@@ -424,21 +414,24 @@ const GamesPage: React.FC<{
             </select>
           </div>
         </div>
-        <button className="p-2 bg-green-500 text-white rounded" type="submit">
+        <button
+          className="p-2 bg-green-500 text-white rounded hover:bg-green-600 transition duration-300"
+          type="submit"
+        >
           Add Game
         </button>
       </form>
-      <h1 className="text-xl mb-4">
+      <h1 className="text-xl mb-4 text-gray-100">
         Games for Week {week} of {year}
       </h1>
       <ul className="space-y-4 w-full max-w-lg">
         {games.map((game, index) => (
           <li
             key={index}
-            className="p-4 border rounded flex justify-between items-center bg-white dark:bg-gray-800 shadow-md"
+            className="p-4 border rounded flex justify-between items-center bg-gray-800 text-gray-100 shadow-md"
           >
-            <div className="flex flex-col dark:bg-gray-800">
-              <span className="text-lg font-semibold mb- 2">
+            <div className="flex flex-col">
+              <span className="text-lg font-semibold mb-2">
                 {game.away_team} @ {game.home_team}
               </span>
               <div className="mb-2">
@@ -463,7 +456,7 @@ const GamesPage: React.FC<{
               {!game.finished && (
                 <div className="flex gap-2 mt-2">
                   <button
-                    className="p-2 bg-yellow-500 text-white rounded"
+                    className="p-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition duration-300"
                     onClick={() =>
                       editGame(index, {
                         ...game,
@@ -486,8 +479,8 @@ const GamesPage: React.FC<{
                     Edit
                   </button>
                   <button
-                    className="p-2 bg-green-500 text-white rounded"
-                    onClick={() => setGameToScore(game.game_id)}
+                    className="p-2 bg-green-500 text-white rounded hover:bg-green-600 transition duration-300"
+                    onClick={() => setgametoScore(game.game_id)}
                   >
                     Score
                   </button>
@@ -497,12 +490,6 @@ const GamesPage: React.FC<{
                 <div className="mt-2">
                   <div className="text-green-500 dark:text-green-500">
                     <h2 className="font-semibold">Final Score</h2>
-                    <button
-                      className="p-2 bg-green-500 text-white rounded"
-                      onClick={() => setGameToScore(game.game_id)}
-                    >
-                      Score
-                    </button>
                     <div>
                       {game.home_team}: {game.home_team_score}
                     </div>
@@ -513,8 +500,6 @@ const GamesPage: React.FC<{
                   <div className="mt-2">
                     <span className="font-semibold">Odds:</span>
                     <div
-                      //green text if the home team covered the spread
-                      //this means if the home_team_score - spread > away_team_score
                       className={
                         game.home_team_score - game.spread >
                         game.away_team_score
@@ -527,8 +512,6 @@ const GamesPage: React.FC<{
                         : `${game.home_team} -${Math.abs(game.spread)}`}
                     </div>
                     <div
-                      //green text if the  road team covered the spread
-                      //this means if the away_team_score + spread > home_team_score
                       className={
                         game.away_team_score + game.spread >
                         game.home_team_score
@@ -542,43 +525,10 @@ const GamesPage: React.FC<{
                     </div>
                   </div>
                   <div className="mt-2">
-                    {/* For Moneyline - write the moneyline score
-                    
-                      For positive moneyline - that means the home team is not the favorite
-
-                      So if the home team wins, then it should output:
-
-                      so if its +250, it means you get a 
-                      350/100 = 3.5 times your bet
-
-                      So this should output -> {game.home_team} - 350%
-
-                      
-                      If the road teams wins, it means you should output:
-
-                      100/(350+100) = 0.2857
-
-                      If its a negative moneyline - you should do the opposite
-                      If the home team wins, you should output:
-
-                      100/(abs(moneyline) + 100) = 0.2857
-
-                      If the road team wins, you should output:
-
-                      abs(moneyline)/100 = 3.5
-
-
-                    */}
-                    <span className="font-semibold">
-                      <h2>Moneyline:</h2>
-                      {moneyLineString(game)}
-                    </span>
-                    <div>{}</div>
-                    {/* over under -
-                    
-                      should write Over or Under (made it)
-
-                      */}
+                    <span className="font-semibold">Moneyline:</span>
+                    <div>{moneyLineString(game)}</div>
+                  </div>
+                  <div className="mt-2">
                     {game.home_team_score + game.away_team_score >
                     game.over_under ? (
                       <>
@@ -609,31 +559,45 @@ const GamesPage: React.FC<{
             </div>
 
             {gametoScore === game.game_id && (
-              <div className="flex gap-4">
+              <div className="mt-2 flex flex-col">
+                <label
+                  //match it to home_team_score input
+                  htmlFor="home_team_score"
+                >
+                  Home Team / {game.home_team}
+                </label>
                 <input
+                  id="home_team_score"
                   type="number"
                   placeholder="Home Score"
                   step={1}
                   min={0}
-                  className="dark:text-gray-800"
+                  className="p-2 border rounded bg-gray-700 text-gray-100"
                   value={home_team_score}
                   onChange={(e) => {
-                    setHomeTeamScore(parseInt(e.target.value, 10));
+                    sethome_team_score(parseInt(e.target.value, 10));
                   }}
                 />
+                <label
+                  //match it to away_team_score input
+                  htmlFor="away_team_score"
+                >
+                  Away Team / {game.away_team}
+                </label>
                 <input
+                  id="away_team_score"
                   type="number"
                   step={1}
                   min={0}
                   placeholder="Away Score"
-                  className="dark:text-gray-800"
+                  className="p-2 border rounded bg-gray-700 text-gray-100"
                   value={away_team_score}
                   onChange={(e) => {
-                    setAwayTeamScore(parseInt(e.target.value, 10));
+                    setaway_team_score(parseInt(e.target.value, 10));
                   }}
                 />
                 <button
-                  className="p-2 bg-green-500 text-white rounded"
+                  className="p-2 bg-green-500 text-white rounded hover:bg-green-600 transition duration-300"
                   onClick={() => {
                     submitGameScore(
                       game.game_id,
@@ -641,12 +605,23 @@ const GamesPage: React.FC<{
                       away_team_score
                     );
 
-                    setGameToScore(null);
-                    setHomeTeamScore(0);
-                    setAwayTeamScore(0);
+                    setgametoScore(null);
+                    sethome_team_score(0);
+                    setaway_team_score(0);
                   }}
                 >
                   Submit
+                </button>
+                {/* Cancel Score */}
+                <button
+                  className="p-2 bg-red-500 text-white rounded hover:bg-red-600 transition duration-300"
+                  onClick={() => {
+                    setgametoScore(null);
+                    sethome_team_score(0);
+                    setaway_team_score(0);
+                  }}
+                >
+                  Cancel
                 </button>
               </div>
             )}

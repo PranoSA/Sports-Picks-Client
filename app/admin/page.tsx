@@ -15,7 +15,7 @@ import queryClient from '@/queries/queryclient';
 import { QueryClientProvider } from '@tanstack/react-query';
 
 import { useGetYears, useAddYear, useDeleteYear } from '@/queries/years';
-import { InsertionYear } from '@/types/bets_and_odds';
+import { FetchedYear, InsertionYear } from '@/types/bets_and_odds';
 
 import Link from 'next/link';
 import { FaTrash } from 'react-icons/fa';
@@ -34,6 +34,8 @@ const Page: React.FC = () => {
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(new Date());
 
+  const { data: years, isLoading, isError, error } = useGetYears();
+
   const [yearsToAdd, setYearsToAdd] = useState<InsertionYear[]>([]);
 
   const [repeatAmount, setRepeatAmount] = useState<number>(1);
@@ -44,6 +46,38 @@ const Page: React.FC = () => {
   useEffect(() => {
     document.body.classList.add('dark');
   }, []);
+
+  type CheckYearResponse = {
+    interferes: boolean;
+    interfering_year: FetchedYear | null;
+  };
+
+  const checkNoYearInterferesWithNewYear = (): CheckYearResponse => {
+    //check every
+    if (!years) return { interferes: true, interfering_year: null };
+
+    //now check every year
+    for (const year of years) {
+      if (year.start_date <= startDate && year.end_date >= startDate) {
+        return {
+          interferes: true,
+          interfering_year: year,
+        };
+      }
+
+      if (year.start_date <= endDate && year.end_date >= endDate) {
+        return {
+          interferes: true,
+          interfering_year: year,
+        };
+      }
+    }
+
+    return {
+      interferes: false,
+      interfering_year: null,
+    };
+  };
 
   const insertYearsWithRepeat = () => {
     // take the year and repeat ammount
@@ -74,6 +108,18 @@ const Page: React.FC = () => {
   //submit years to add
   const submitYears = async () => {
     const yearsToAdd = insertYearsWithRepeat();
+
+    //check if any years interfere with the new years
+    for (const year of yearsToAdd) {
+      const { interferes, interfering_year } =
+        checkNoYearInterferesWithNewYear();
+      if (interferes) {
+        console.log('interferes with year:', interfering_year);
+        alert('Interferes with year: ' + interfering_year?.year_id);
+        return;
+      }
+    }
+
     //console.log(yearsToAdd);
     await addYear.mutateAsync(yearsToAdd);
   };

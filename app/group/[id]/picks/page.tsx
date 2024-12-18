@@ -961,6 +961,12 @@ type GameDisplayProps = {
 };
 
 const GameDisplay: React.FC<GameDisplayProps> = ({ game, bet, pick }) => {
+  console.log('game', game);
+
+  if (!game) {
+    return <div>Game not found</div>;
+  }
+
   const selectionString = (game: FetchedGame, bet: Bet) => {
     // check type
     if (bet.type === 'spread') {

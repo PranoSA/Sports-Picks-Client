@@ -79,6 +79,44 @@ const Page: React.FC<{
     }
   }, [auto1Week, newWeek]);
 
+  type WeekInterferesResponse = {
+    interferes: boolean;
+    interfering_week: FetchedWeek | null;
+  };
+
+  const checkNoWeekInterferesWithNewWeek = (): WeekInterferesResponse => {
+    //check every
+    if (!weeks) return { interferes: true, interfering_week: null };
+
+    //now check every week
+    for (const week of weeks) {
+      if (
+        week.start_date <= newWeek.start_date &&
+        week.end_date >= newWeek.start_date
+      ) {
+        return {
+          interferes: true,
+          interfering_week: week,
+        };
+      }
+
+      if (
+        week.start_date <= newWeek.end_date &&
+        week.end_date >= newWeek.end_date
+      ) {
+        return {
+          interferes: true,
+          interfering_week: week,
+        };
+      }
+    }
+
+    return {
+      interferes: false,
+      interfering_week: null,
+    };
+  };
+
   const addWeek = async () => {
     if (autoAddWeeks) {
       const newWeeks = Array.from({ length: autoAddNumber }, (_, index) => {
@@ -94,8 +132,38 @@ const Page: React.FC<{
           week_name: `${newWeek.week_name} ${index + 1}`,
         };
       });
+
+      //check if any weeks interfere
+      for (const week of newWeeks) {
+        const { interferes, interfering_week } =
+          checkNoWeekInterferesWithNewWeek();
+        if (interferes) {
+          console.log(
+            `Week ${week.week_name} interferes with ${interfering_week?.week_name}`
+          );
+          alert(
+            `Week ${week.week_name} interferes with ${interfering_week?.week_name}`
+          );
+          return;
+        }
+      }
+
       addWeeks.mutate(newWeeks);
     } else {
+      //check if any weeks interfere
+      const { interferes, interfering_week } =
+        checkNoWeekInterferesWithNewWeek();
+
+      if (interferes) {
+        console.log(
+          `Week ${newWeek.week_name} interferes with ${interfering_week?.week_name}`
+        );
+        alert(
+          `Week ${newWeek.week_name} interferes with ${interfering_week?.week_name}`
+        );
+        return;
+      }
+
       addWeeks.mutate([newWeek]);
     }
   };
@@ -113,20 +181,20 @@ const Page: React.FC<{
   }
 
   return (
-    <div className="p-4 flex flex-col items-center">
+    <div className="p-4 flex flex-col items-center dark:bg-gray-900 min-h-screen">
       <form
-        className="w-full max-w-lg flex flex-col gap-4 mb-4 p-4 bg-white dark:bg-gray-800 rounded shadow-md"
+        className="w-full max-w-lg flex flex-col gap-4 mb-4 p-4 bg-gray-800 text-gray-100 rounded shadow-md"
         onSubmit={(e) => {
           e.preventDefault();
           addWeek();
         }}
       >
         <div className="flex flex-col">
-          <label className="mb-2">Week week_name</label>
+          <label className="mb-2">Week Name</label>
           <input
-            className="p-2 border rounded dark:text-gray-800"
+            className="p-2 border rounded bg-gray-700 text-gray-100"
             type="text"
-            placeholder="Week week_name"
+            placeholder="Week Name"
             value={newWeek.week_name}
             onChange={(e) =>
               setNewWeek({ ...newWeek, week_name: e.target.value })
@@ -136,7 +204,7 @@ const Page: React.FC<{
         <div className="flex flex-col">
           <label className="mb-2">Start Date</label>
           <input
-            className="p-2 border rounded dark:text-gray-800"
+            className="p-2 border rounded bg-gray-700 text-gray-100"
             type="date"
             value={newWeek.start_date.toISOString().split('T')[0]}
             onChange={(e) =>
@@ -150,7 +218,7 @@ const Page: React.FC<{
           <div className="flex flex-col">
             <label className="mb-2">End Date</label>
             <input
-              className="p-2 border rounded dark:text-gray-800"
+              className="p-2 border rounded bg-gray-700 text-gray-100"
               type="date"
               value={newWeek.end_date.toISOString().split('T')[0]}
               onChange={(e) =>
@@ -159,7 +227,7 @@ const Page: React.FC<{
             />
             {/* Button to toggle auto 1 week */}
             <button
-              className="p-2 bg-blue-500 text-white rounded"
+              className="p-2 mt-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-300"
               onClick={() => setAuto1Week(true)}
             >
               Auto 1 Week
@@ -171,6 +239,7 @@ const Page: React.FC<{
             type="checkbox"
             checked={autoAddWeeks}
             onChange={() => setAutoAddWeeks(!autoAddWeeks)}
+            className="form-checkbox h-5 w-5 text-blue-600"
           />
           <label>Auto Add Weeks</label>
         </div>
@@ -178,7 +247,7 @@ const Page: React.FC<{
           <div className="flex flex-col">
             <label className="mb-2">Number of Weeks</label>
             <input
-              className="p-2 border rounded dark:text-gray-800"
+              className="p-2 border rounded bg-gray-700 text-gray-100"
               type="number"
               min="1"
               value={autoAddNumber}
@@ -186,7 +255,10 @@ const Page: React.FC<{
             />
           </div>
         )}
-        <button className="p-2 bg-green-500 text-white rounded" type="submit">
+        <button
+          className="p-2 bg-green-500 text-white rounded hover:bg-green-600 transition duration-300"
+          type="submit"
+        >
           Add Week
         </button>
       </form>
@@ -234,36 +306,36 @@ const WeekDisplay: React.FC<{ year_id: string }> = ({ year_id }) => {
   }
 
   return (
-    <div className="p-4 flex flex-col items-center">
-      <h1 className="text-xl mb-4">Weeks for Year {year_id}</h1>
+    <div className="p-4 flex flex-col items-center dark:bg-gray-900 min-h-screen">
+      <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">
+        Weeks for Year {year_id}
+      </h1>
       <ul className="space-y-4 w-full max-w-lg">
         {weeks.map((week, index) => (
           <li
             key={index}
             className="p-4 border rounded flex justify-between items-center bg-white dark:bg-gray-800 shadow-md"
           >
-            <span>
+            <span className="text-gray-900 dark:text-gray-100">
               {week.week_name} ({week.start_date.toDateString()} -{' '}
               {week.end_date.toDateString()})
             </span>
-
-            <Link
-              href={`/admin/year/${year_id}/week/${week.week_id}`}
-              className="p-4"
-            >
-              <FaArrowRight
-                className=" text-white  dark:text-neonPurple cursor-pointer"
-                size={32}
-              />
-            </Link>
-            <button
-              className="p-2 bg-red-500 text-white rounded"
-              onClick={() =>
-                deleteWeek.mutate({ week_id: week.week_id, year_id })
-              }
-            >
-              <FaTrash />
-            </button>
+            <div className="flex items-center space-x-4">
+              <Link
+                href={`/admin/year/${year_id}/week/${week.week_id}`}
+                className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-300"
+              >
+                <FaArrowRight size={16} />
+              </Link>
+              <button
+                className="p-2 bg-red-500 text-white rounded hover:bg-red-600 transition duration-300"
+                onClick={() =>
+                  deleteWeek.mutate({ week_id: week.week_id, year_id })
+                }
+              >
+                <FaTrash size={16} />
+              </button>
+            </div>
           </li>
         ))}
       </ul>

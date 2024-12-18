@@ -211,6 +211,102 @@ type FetchedChoice = {
   pick: boolean;
 };
 
+/*
+[
+    [
+        {
+            "week": "2024-12-11T00:00:00.000Z-2024-12-17T23:59:59.000Z",
+            "user_id": "4d15cb58-ad43-454d-b8d6-0409f6bea8af",
+            "score": 0,
+            "potential": 0
+        },
+        {
+            "week": "2024-12-11T00:00:00.000Z-2024-12-17T23:59:59.000Z",
+            "user_id": "6a17d982-e464-4dc5-b7f7-ab30dd7bad08",
+            "score": 0,
+            "potential": 0
+        },
+        {
+            "week": "2024-12-11T00:00:00.000Z-2024-12-17T23:59:59.000Z",
+            "user_id": "ee303ae8-afb0-445d-8066-2910198a0a56",
+            "score": 0,
+            "potential": 0
+        }
+    ],
+    [
+        {
+            "week": "2024-12-18T00:00:00.000Z-2024-12-24T23:59:59.000Z",
+            "user_id": "4d15cb58-ad43-454d-b8d6-0409f6bea8af",
+            "score": 0,
+            "potential": 0
+        },
+        {
+            "week": "2024-12-18T00:00:00.000Z-2024-12-24T23:59:59.000Z",
+            "user_id": "6a17d982-e464-4dc5-b7f7-ab30dd7bad08",
+            "score": 0,
+            "potential": 0
+        },
+        {
+            "week": "2024-12-18T00:00:00.000Z-2024-12-24T23:59:59.000Z",
+            "user_id": "ee303ae8-afb0-445d-8066-2910198a0a56",
+            "score": 0,
+            "potential": 0
+        }
+    ],
+    [
+        {
+            "week": "2024-12-25T00:00:00.000Z-2024-12-31T23:59:59.000Z",
+            "user_id": "4d15cb58-ad43-454d-b8d6-0409f6bea8af",
+            "score": 0,
+            "potential": 0
+        },
+        {
+            "week": "2024-12-25T00:00:00.000Z-2024-12-31T23:59:59.000Z",
+            "user_id": "6a17d982-e464-4dc5-b7f7-ab30dd7bad08",
+            "score": 0,
+            "potential": 0
+        },
+        {
+            "week": "2024-12-25T00:00:00.000Z-2024-12-31T23:59:59.000Z",
+            "user_id": "ee303ae8-afb0-445d-8066-2910198a0a56",
+            "score": 0,
+            "potential": 0
+        }
+    ],
+    [
+        {
+            "week": "2025-01-01T00:00:00.000Z-2025-01-07T23:59:59.000Z",
+            "user_id": "4d15cb58-ad43-454d-b8d6-0409f6bea8af",
+            "score": 0,
+            "potential": 0
+        },
+        {
+            "week": "2025-01-01T00:00:00.000Z-2025-01-07T23:59:59.000Z",
+            "user_id": "6a17d982-e464-4dc5-b7f7-ab30dd7bad08",
+            "score": 0,
+            "potential": 0
+        },
+        {
+            "week": "2025-01-01T00:00:00.000Z-2025-01-07T23:59:59.000Z",
+            "user_id": "ee303ae8-afb0-445d-8066-2910198a0a56",
+            "score": 0,
+            "potential": 0
+        }
+    ]
+]
+    */
+
+type UserScore = {
+  week: string;
+  user_id: string;
+  score: number;
+  potential: number;
+};
+
+type WeekScores = UserScore[];
+
+type AllScores = WeekScores[];
+
 export type {
   Year,
   InsertionYear,
@@ -232,4 +328,7 @@ export type {
   Choice,
   InsertionChoice,
   FetchedChoice,
+  UserScore,
+  WeekScores,
+  AllScores,
 };
