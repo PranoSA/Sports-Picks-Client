@@ -33,6 +33,10 @@ import { useGetGroupById } from '@/queries/groups';
 //queries for getting the week
 import { useGetWeeks } from '@/queries/weeks';
 
+/*
+State of this
+*/
+
 /**
  *
  * Sample :
