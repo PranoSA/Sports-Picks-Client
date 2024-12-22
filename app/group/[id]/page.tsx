@@ -57,6 +57,10 @@ const GroupHomePage: React.FC<{
         <div className="mb-4 dark:text-white">
           <span className="font-semibold">Group Name:</span> {group.group_name}
         </div>
+        {/* View Results */}
+        <div className="mb-4 dark:text-white">
+          <Link href={`/group/${id}/scores`}>View Results</Link>
+        </div>
         <div className="mb-4 dark:text-white">
           <GroupMemberDropdown group={group} />
         </div>

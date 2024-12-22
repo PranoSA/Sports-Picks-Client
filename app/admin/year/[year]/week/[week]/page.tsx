@@ -22,6 +22,7 @@ import queryClient from '@/queries/queryclient';
 
 import '@/app/globals.css';
 import { FetchedGame, InsertionGame } from '@/types/bets_and_odds';
+import { UseSetAutomatedUpdates } from '@/queries/admin';
 
 // get param
 
@@ -128,7 +129,7 @@ const GamesPage: React.FC<{
     );
     //setGames(updatedGames);
   };
-
+  const update_automatic = UseSetAutomatedUpdates();
   //game-id
   const [gametoScore, setgametoScore] = useState<string | null>(null);
   const [home_team_score, sethome_team_score] = useState<number>(0);
@@ -232,6 +233,15 @@ const GamesPage: React.FC<{
 
   return (
     <div className="p-4 flex flex-col items-center dark:bg-gray-900 min-h-screen">
+      {/* BUtton To Set Automated Updates */}
+      <div className="flex gap-4">
+        <button
+          className="p-2 bg-green-500 text-white rounded hover:bg-green-600 transition duration-300"
+          onClick={() => update_automatic.mutate()}
+        >
+          Set Automated Updates
+        </button>
+      </div>
       <form
         className="w-full max-w-lg flex flex-col gap-4 mb-4 p-4 bg-gray-800 text-gray-100 rounded shadow-md"
         onSubmit={(e) => {

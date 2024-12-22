@@ -39,6 +39,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
+exports.UseSetAutomatedUpdates = void 0;
 var react_query_1 = require("@tanstack/react-query");
 var getToken = function () {
     return localStorage.getItem('accessToken');
@@ -63,6 +64,32 @@ var Use_is_admin = function () {
     return react_query_1.useQuery({
         queryKey: ['is_admin'],
         queryFn: is_admin
+    });
+};
+///admin/automatic_updates
+var setAutomatedUpdates = function () { return __awaiter(void 0, void 0, void 0, function () {
+    var url;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                url = process.env.NEXT_PUBLIC_API_URL + "/admin/automatic_updates";
+                console.log('url', url);
+                return [4 /*yield*/, fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            Authorization: "Bearer " + getToken()
+                        }
+                    }).then(function (res) { return res.json(); })];
+            case 1: return [2 /*return*/, _a.sent()];
+        }
+    });
+}); };
+exports.UseSetAutomatedUpdates = function () {
+    return react_query_1.useMutation({
+        mutationFn: setAutomatedUpdates,
+        onSuccess: function () {
+            console.log('Automated updates set');
+        }
     });
 };
 exports["default"] = Use_is_admin;

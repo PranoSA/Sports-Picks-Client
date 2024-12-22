@@ -6,6 +6,27 @@ import { useMemo, useState } from 'react';
 
 import { UserScore, WeekScores, AllScores } from '@/types/bets_and_odds';
 
+import { Line } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
 import seGetScoresForGroup from '@/queries/scores';
 /*
 This Page will allow you to show th scores of the group members
@@ -121,6 +142,8 @@ const Page: React.FC<{
           <WeekScoresComponent scores={scoresByUserForWeek} />
         )}
       </div>
+
+      <ScoreGraph scores={groupScores} />
     </div>
   );
 };
@@ -156,6 +179,69 @@ const WeekScoresComponent: React.FC<{ scores: { [key: string]: number } }> = ({
           </li>
         ))}
       </ul>
+    </div>
+  );
+};
+
+const ScoreGraph: React.FC<{ scores: AllScores }> = ({ scores }) => {
+  const users = Array.from(new Set(scores.flat().map((d) => d.user_id))).sort();
+
+  const cumulativeScores: { [key: string]: number[] } = {};
+  users.forEach((user) => {
+    cumulativeScores[user] = [];
+    let cumulativeScore = 0;
+    scores.forEach((weekScores) => {
+      const userScore = weekScores.find((d) => d.user_id === user);
+      if (userScore) {
+        cumulativeScore += userScore.score;
+      }
+      cumulativeScores[user].push(cumulativeScore);
+    });
+  });
+
+  const data = {
+    labels: scores.map((_, index) => `Week ${index + 1}`),
+    datasets: users.map((user, index) => ({
+      label: user,
+      data: cumulativeScores[user],
+      borderColor: `hsl(${(index * 360) / users.length}, 70%, 50%)`,
+      backgroundColor: `hsl(${(index * 360) / users.length}, 70%, 50%, 0.5)`,
+      fill: false,
+    })),
+  };
+
+  const options = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+      },
+      title: {
+        display: true,
+        text: 'Cumulative Scores by Week',
+      },
+    },
+    scales: {
+      x: {
+        title: {
+          display: true,
+          text: 'Week',
+        },
+      },
+      y: {
+        min: 0,
+        title: {
+          display: true,
+          text: 'Cumulative Score',
+        },
+      },
+    },
+  };
+
+  return (
+    <div>
+      <h2 className="text-xl font-bold mb-4">Score Graph</h2>
+      <Line data={data} options={options} />
     </div>
   );
 };

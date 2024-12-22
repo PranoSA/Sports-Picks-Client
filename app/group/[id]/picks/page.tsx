@@ -142,8 +142,6 @@ const Page: React.FC<{
       return !game.finished;
     });
 
-    console.log('Pending choices', pendingChoices);
-
     return pendingChoices.reduce((acc, choice) => {
       const bet = sampleBets[choice.bet_id];
       return acc + bet.num_points;
@@ -322,6 +320,19 @@ const Page: React.FC<{
         ) as number,
       };
     });
+    //if game_index is -1 -> then the game has not been found
+    //remove it from allocatedBets
+
+    //filter out the games that have not been found
+    Object.keys(allocatedBets).forEach((key) => {
+      const numericKey = Number(key);
+      if (allocatedBets[numericKey].gameIndex === -1) {
+        //delete allocatedBets[numericKey];
+      }
+    });
+
+    console.log('games', games);
+    console.log('allocatedBets', allocatedBets);
 
     return allocatedBets;
   }, [choices, games, sampleBets]);
@@ -343,9 +354,7 @@ const Page: React.FC<{
     selection: number
   ) => {
     if ((selectedBet && new Date() < game.kickoff) || true) {
-      console.log('Game has not started yet');
       // find if a choice already exists for this bet -> bet_id = betIndex
-      console.log('betIndex', betIndex);
 
       const old_choices = choices;
 
@@ -391,7 +400,6 @@ const Page: React.FC<{
       setSelectedBet(null);
       setSelectedGame(null);
     } else {
-      console.log('Kickoff has already happened');
     }
   };
 
@@ -573,8 +581,6 @@ const Page: React.FC<{
 
       const choice = choices.find((choice) => choice.bet_id === index_of_bet);
 
-      console.log('choice', choice);
-
       if (!choice) {
         return 'hasnt-started';
       }
@@ -586,8 +592,48 @@ const Page: React.FC<{
         return 'hasnt-started';
       }
 
+      console.log('Game Kickoff', game.kickoff);
+      console.log('Game Current Time', new Date());
+
       //check if the game has started
-      if (new Date() <= game.kickoff) {
+      if (new Date() >= game.kickoff) {
+        console.log(game, 'is in progress');
+        //check if game has been finished/scores
+        if (game.finished) {
+          //check th result of the game
+          if (bet.type === 'spread') {
+            const spread = game.spread;
+            if (choice.pick) {
+              return game.home_team_score - game.away_team_score > spread
+                ? 'success'
+                : 'fail';
+            } else {
+              return game.away_team_score - game.home_team_score > spread
+                ? 'success'
+                : 'fail';
+            }
+          }
+
+          if (bet.type === 'over_under') {
+            const over_under = game.over_under;
+            return game.home_team_score + game.away_team_score > over_under
+              ? 'success'
+              : 'fail';
+          }
+
+          if (bet.type === 'moneyline') {
+            if (choice.pick) {
+              return game.home_team_score > game.away_team_score
+                ? 'success'
+                : 'fail';
+            } else {
+              return game.away_team_score > game.home_team_score
+                ? 'success'
+                : 'fail';
+            }
+          }
+        }
+
         return 'in-progress';
       } else {
         return 'hasnt-started';
@@ -599,7 +645,7 @@ const Page: React.FC<{
       //for now -> since we don't have results yet -> just return in progress
     };
     return sampleBets.map((bet) => beStatus(bet));
-  }, [sampleBets]);
+  }, [choices, games, sampleBets]);
 
   if (gamesLoading || groupLoading) {
     return <div>Loading...</div>;
@@ -635,7 +681,6 @@ const Page: React.FC<{
           className="p-8 border rounded bg-blue-500 text-white"
           onClick={() => {
             handleSubmission();
-            //console.log('choices', choices);
           }}
         >
           Submit Choices
@@ -676,7 +721,8 @@ const Page: React.FC<{
                   : `${getStatusColor(bet_statuses[index])}`
               } ${
                 Object.values(allocatedBets).some(
-                  (allocatedBet) => allocatedBet?.bet === bet
+                  (allocatedBet) =>
+                    allocatedBet?.bet === bet && allocatedBet.gameIndex !== -1
                 )
                   ? 'opacity-50'
                   : ''
@@ -685,7 +731,6 @@ const Page: React.FC<{
                 //if the status is not "hasnt-started" -> don't allow the user to select the bet
 
                 //log the game corresponding to the bet
-                console.log('bet', bet);
 
                 const choice = choices.find(
                   (choice) => choice.bet_id === index
@@ -695,7 +740,13 @@ const Page: React.FC<{
                   (game) => game.game_id === choice?.game_id
                 );
 
-                console.log('game', game);
+                console.log('Bet status', bet_statuses);
+
+                //print corresponding game
+                console.log('Game corresponding to bet', game);
+
+                //print nicely formatted time in local time
+                console.log('Kickoff time', game?.kickoff.toLocaleString());
 
                 if (bet_statuses[index] !== 'hasnt-started') {
                   return;
@@ -710,7 +761,8 @@ const Page: React.FC<{
                 ? `Over/Under: ${bet.num_points}`
                 : `Moneyline : ${bet.num_points}`}
               {Object.values(allocatedBets).some(
-                (allocatedBet) => allocatedBet?.bet === bet
+                (allocatedBet) =>
+                  allocatedBet?.bet === bet && allocatedBet.gameIndex !== -1
               ) && <span className="ml-2 text-green-500">✔</span>}
             </li>
           ))}
@@ -718,6 +770,34 @@ const Page: React.FC<{
       </div>
       {selectedBet && (
         <div className="w-full max-w-lg mb-4">
+          <div className="flex flex-col items-center">
+            <h2 className="text-lg mb-2"> Current Selection :</h2>
+            <span className="text-lg font-semibold">
+              {selectedBet.type === 'spread'
+                ? `Spread: ${selectedBet.num_points}`
+                : selectedBet.type === 'over_under'
+                ? `Over/Under: ${selectedBet.num_points}`
+                : `Moneyline : ${selectedBet.num_points}`}
+            </span>
+            <div>
+              {(() => {
+                console.log('Selected Bet', selectedBet);
+                const selectedBetIndex =
+                  allocatedBets[
+                    sampleBets.findIndex((bet) => bet === selectedBet)
+                  ];
+                console.log('Selected Bet Index', selectedBetIndex);
+                const selectedGameIndex = selectedBetIndex?.gameIndex;
+                const selectedGame = games[selectedGameIndex];
+                return selectedGame ? (
+                  <>
+                    {selectedGame.home_team} @ {selectedGame.away_team}
+                  </>
+                ) : null;
+              })()}
+            </div>
+          </div>
+
           <h2 className="text-lg mb-2">Select Game for Bet</h2>
           <ul className="space-y-4">
             {gamesToMap.map((game, index) => (
@@ -961,8 +1041,6 @@ type GameDisplayProps = {
 };
 
 const GameDisplay: React.FC<GameDisplayProps> = ({ game, bet, pick }) => {
-  console.log('game', game);
-
   if (!game) {
     return <div>Game not found</div>;
   }
