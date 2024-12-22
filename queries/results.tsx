@@ -16,8 +16,6 @@ import {
   UseMutationResult,
 } from '@tanstack/react-query';
 
-import queryClient from './queryclient';
-
 // get the previous weeks to this point [just so you know what week you are on]
 const getWeeks = async (): Promise<FetchedWeek[]> => {
   const url: string = `${process.env.NEXT_PUBLIC_API_URL}/current_year/weeks`;
