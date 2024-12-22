@@ -7,3 +7,8 @@ for each user
 
 Color Coded by user
 */
+const Page: React.FC = () => {
+  return <h1>Page</h1>;
+};
+
+export default Page;
