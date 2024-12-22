@@ -66,6 +66,9 @@ exports.__esModule = true;
 exports.useDeleteYear = exports.useAddYear = exports.useGetYears = void 0;
 var react_query_1 = require("@tanstack/react-query");
 var queryclient_1 = require("./queryclient");
+var getToken = function () {
+    return localStorage.getItem('accessToken');
+};
 function useGetYears() {
     var _this = this;
     return react_query_1.useQuery({
@@ -90,7 +93,11 @@ var fetchYears = function () { return __awaiter(void 0, void 0, Promise, functio
         switch (_a.label) {
             case 0:
                 url = process.env.NEXT_PUBLIC_API_URL + "/years";
-                return [4 /*yield*/, fetch(url)];
+                return [4 /*yield*/, fetch(url, {
+                        headers: {
+                            Authorization: "Bearer " + getToken()
+                        }
+                    })];
             case 1:
                 res = _a.sent();
                 // if the response is not ok, throw an error
@@ -116,7 +123,8 @@ var addYears = function (years) { return __awaiter(void 0, void 0, Promise, func
                 return [4 /*yield*/, fetch(url, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            Authorization: "Bearer " + getToken()
                         },
                         body: JSON.stringify(years)
                     })];
@@ -159,7 +167,8 @@ var deleteYear = function (year_id) { return __awaiter(void 0, void 0, Promise, 
             case 0:
                 url = process.env.NEXT_PUBLIC_API_URL + "/years/" + year_id;
                 return [4 /*yield*/, fetch(url, {
-                        method: 'DELETE'
+                        method: 'DELETE',
+                        Authorization: "Bearer " + getToken()
                     })];
             case 1:
                 res = _a.sent();

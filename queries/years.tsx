@@ -67,6 +67,7 @@ const addYears = async (years: InsertionYear[]): Promise<FetchedYear[]> => {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      Authorization: `Bearer ${getToken()}`,
     },
     body: JSON.stringify(years),
   });
@@ -103,6 +104,9 @@ const deleteYear = async (year_id: string): Promise<InsertionYear> => {
 
   const res = await fetch(url, {
     method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+    },
   });
 
   // if the response is not ok, throw an error
