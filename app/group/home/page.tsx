@@ -3,6 +3,7 @@
  * List All your groups here
  * Links so you can navigate to the group page
  */
+'use client';
 
 import { useGetGroups } from '@/queries/groups';
 import { QueryClientProvider } from '@tanstack/react-query';
