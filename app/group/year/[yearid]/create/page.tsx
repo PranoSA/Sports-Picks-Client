@@ -94,13 +94,13 @@ function CreateGroupPage({
       const new_group: InsertionGroup = {
         group_name: groupName,
         bets: bets,
-        year_id: yearid,
+        // year_id: yearid,
       };
 
       createGroup.mutate({
         group_name: groupName,
         bets: bets,
-        year_id: yearid,
+        ///year_id: yearid,
       });
     }
   };
