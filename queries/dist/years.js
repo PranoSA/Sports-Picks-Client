@@ -168,7 +168,9 @@ var deleteYear = function (year_id) { return __awaiter(void 0, void 0, Promise, 
                 url = process.env.NEXT_PUBLIC_API_URL + "/years/" + year_id;
                 return [4 /*yield*/, fetch(url, {
                         method: 'DELETE',
-                        Authorization: "Bearer " + getToken()
+                        headers: {
+                            Authorization: "Bearer " + getToken()
+                        }
                     })];
             case 1:
                 res = _a.sent();

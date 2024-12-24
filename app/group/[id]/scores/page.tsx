@@ -67,6 +67,13 @@ const Page: React.FC<{
     isError: isScoresError,
   } = seGetScoresForGroup(id);
 
+  //filtered weeks memo
+  //weeks that have started
+  const filteredWeeks = useMemo(() => {
+    if (!weeks) return [];
+    return weeks.filter((week) => week.start_date < new Date());
+  }, [weeks]);
+
   console.log('groupScores', groupScores);
 
   const TotalScores = useMemo(() => {
@@ -74,7 +81,18 @@ const Page: React.FC<{
     // Reduce a map of total scores by user
     const totalScores: { [key: string]: number } = {};
 
-    groupScores.forEach((weekScores: WeekScores) => {
+    if (!weeks) return {};
+
+    //filter groupScores basedon the week start date
+    const filteredGroupScores = groupScores.filter((weekScores) => {
+      const week = weeks.find((week) => week.week_id == weekScores[0].week);
+
+      if (!week) return false;
+
+      return week.start_date < new Date();
+    });
+
+    filteredGroupScores.forEach((weekScores: WeekScores) => {
       weekScores.forEach((userScore: UserScore) => {
         const { user_id, score } = userScore;
         if (totalScores[user_id]) {
@@ -86,7 +104,7 @@ const Page: React.FC<{
     });
 
     return totalScores;
-  }, [groupScores]);
+  }, [groupScores, weeks]);
 
   //now a memo that just reutnrs the score per the selected week
   const scoresByUserForWeek: { [key: string]: number } = useMemo(() => {
@@ -128,7 +146,7 @@ const Page: React.FC<{
         onChange={(e) => setSelectedWeek(e.target.value)}
       >
         <option value="all">All</option>
-        {weeks?.map((week) => (
+        {filteredWeeks?.map((week) => (
           <option key={week.week_id} value={week.week_id}>
             {week.week_id}
           </option>
@@ -186,6 +204,12 @@ const WeekScoresComponent: React.FC<{ scores: { [key: string]: number } }> = ({
 const ScoreGraph: React.FC<{ scores: AllScores }> = ({ scores }) => {
   const users = Array.from(new Set(scores.flat().map((d) => d.user_id))).sort();
 
+  const {
+    data: weeks,
+    isLoading: weeksLoading,
+    isError: weeksError,
+  } = useGetWeeksForCurrentYear();
+
   const cumulativeScores: { [key: string]: number[] } = {};
   users.forEach((user) => {
     cumulativeScores[user] = [];
@@ -200,7 +224,14 @@ const ScoreGraph: React.FC<{ scores: AllScores }> = ({ scores }) => {
   });
 
   const data = {
-    labels: scores.map((_, index) => `Week ${index + 1}`),
+    labels: scores.map((s, index) => {
+      if (weeksLoading) return 'loading';
+      if (!weeks) return 'loading';
+      const week_for_score = weeks.find((week) => week.week_id == s[0].week);
+      if (!week_for_score) return 'loading';
+
+      return week_for_score.start_date.toLocaleDateString();
+    }),
     datasets: users.map((user, index) => ({
       label: user,
       data: cumulativeScores[user],
