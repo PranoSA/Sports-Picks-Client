@@ -155,7 +155,7 @@ const ListOfGroupsComponent = () => {
                 </h1>
                 <FaExternalLinkAlt
                   size={16}
-                  className="cursor-pointer text-blue-500"
+                  className="cursor-pointer text-blue-500 m-4"
                 />
                 {/* */}
               </div>
