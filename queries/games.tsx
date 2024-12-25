@@ -254,3 +254,44 @@ export const useSubmitScoreForGame = (): UseMutationResult<
     },
   });
 };
+
+const getGamesByWeek = async (week_id: string) => {
+  //fetch
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/games/weeks/${week_id}`,
+    {
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+      },
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error('Network response was not okay');
+  }
+
+  type GameFromServer = FetchedGame & { kickoff: string };
+
+  const data_from_server: GameFromServer[] = await res.json();
+
+  const data = data_from_server.map((game) => {
+    return {
+      ...game,
+      kickoff: new Date(game.kickoff),
+    };
+  });
+
+  return data;
+};
+
+export const useGetGamesByWeek = (
+  week_id: string
+): UseQueryResult<FetchedGame[], unknown> => {
+  return useQuery({
+    queryKey: ['games', week_id],
+    queryFn: async () => {
+      const new_games = await getGamesByWeek(week_id);
+      return new_games;
+    },
+  });
+};

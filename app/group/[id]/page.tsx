@@ -12,6 +12,9 @@ import GroupMemberDropdown from '@/components/GroupMemberDropdown';
 
 import WeekMenu from '@/components/WeekMenu';
 
+//get games by week
+import { useGetGamesByWeek } from '@/queries/games';
+
 //
 const GroupHomePageWithProvider: React.FC<{
   params: {
@@ -46,7 +49,7 @@ const GroupHomePage: React.FC<{
   }
 
   return (
-    <div className="p-4 flex flex-col items-center">
+    <div className="p-4 flex flex-col items-center dark:bg-gray-800 bg-gray-800">
       <div className="w-full max-w-2xl bg-white dark:bg-gray-800 p-6 rounded shadow-md">
         <h1 className="text-2xl font-bold mb-4 dark:text-white">
           Group Details

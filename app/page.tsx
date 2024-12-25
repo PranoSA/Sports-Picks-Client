@@ -30,7 +30,7 @@ import GroupStore from '@/components/GroupStore';
 import { FetchedGroup } from '@/types/bets_and_odds';
 
 //import react/fa-icons for dropdown and up and down arrows
-import { FaAngleDown, FaAngleUp } from 'react-icons/fa';
+import { FaAngleDown, FaAngleUp, FaExternalLinkAlt } from 'react-icons/fa';
 
 //import icons that show leadership role (maybe crown), and then a regular user icon
 import { FaCrown, FaUser } from 'react-icons/fa';
@@ -148,7 +148,18 @@ const ListOfGroupsComponent = () => {
             key={group.group_id}
             className="flex flex-wrap p-4 border rounded bg-white dark:bg-gray-600 shadow-md w-full max-w-1/2"
           >
-            <Link href={`/group/${group.group_id}`}>{group.group_name}</Link>
+            <Link href={`/group/${group.group_id}`}>
+              <div className="flex flex-row w-full">
+                <h1 className="text-xl font-bold dark:text-white m-3">
+                  {group.group_name}
+                </h1>
+                <FaExternalLinkAlt
+                  size={16}
+                  className="cursor-pointer text-blue-500"
+                />
+                {/* */}
+              </div>
+            </Link>
             <GroupPad group={group} />
           </li>
         ))}

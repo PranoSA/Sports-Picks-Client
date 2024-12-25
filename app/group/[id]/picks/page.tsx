@@ -18,7 +18,18 @@ import {
   Bet,
   FetchedGame,
   InsertionChoice,
+  //something for an open circle / pending
 } from '@/types/bets_and_odds';
+
+//icons like checkmark, miss/X, and pending(open circle)
+import {
+  FaCheckCircle,
+  FaTimesCircle,
+  FaCircle,
+  FaCheck,
+  FaTimes,
+} from 'react-icons/fa';
+
 import { use, useEffect, useMemo, useState } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 
@@ -32,7 +43,7 @@ import { useGetGroupById } from '@/queries/groups';
 
 //queries for getting the week
 import { useGetWeeks } from '@/queries/weeks';
-import { useGetPicks, useAddPicks } from '../../../../queries/picks';
+import { useGetPicks, useAddPicks } from '@/queries/picks';
 
 /**
  *
@@ -94,16 +105,79 @@ const Page: React.FC<{
     }
   }, [picks]);
 
+  //submittable is true if changes have been made
+  const submittable = useMemo(() => {
+    //compare choices with picks
+    if (!picks) {
+      return false;
+    }
+
+    if (choices.length !== picks.length) {
+      return true;
+    }
+
+    //check if the choices are different
+    return choices.some((choice, index) => {
+      const pick = picks[index];
+      return (
+        choice.bet_id !== pick.bet_id ||
+        choice.game_id !== pick.game_id ||
+        choice.pick !== pick.pick
+      );
+    });
+
+    //if the lengths are different, then return true
+  }, [choices, picks]);
+
   //set to dark mode
   useEffect(() => {
     document.body.classList.add('dark');
   }, []);
 
   const {
-    data: games,
+    data: unSortedgames,
     isLoading: gamesLoading,
     isError: gamesError,
   } = useGetCurrentWeekGames();
+
+  //games should be sorted
+  const games = useMemo(() => {
+    if (!unSortedgames) {
+      return [];
+    }
+
+    //order by time -> but games that have started go after games that have not started
+    const notStartedGames = unSortedgames.filter(
+      (game) => new Date() < game.kickoff
+    );
+
+    const startedGames = unSortedgames.filter(
+      (game) => new Date() >= game.kickoff
+    );
+
+    //sort the not started games
+    const sortedNotStartedGames = notStartedGames.sort((a, b) => {
+      if (a.kickoff < b.kickoff) {
+        return -1;
+      } else if (a.kickoff > b.kickoff) {
+        return 1;
+      } else {
+        return 0;
+      }
+    });
+
+    const sortedStartedGames = startedGames.sort((a, b) => {
+      if (a.kickoff < b.kickoff) {
+        return -1;
+      } else if (a.kickoff > b.kickoff) {
+        return 1;
+      } else {
+        return 0;
+      }
+    });
+
+    return [...sortedNotStartedGames, ...sortedStartedGames];
+  }, [unSortedgames]);
 
   const {
     data: group,
@@ -673,12 +747,14 @@ const Page: React.FC<{
   };
 
   return (
-    <div className="p-4 flex flex-col items-center">
+    <div className="p-4 flex flex-col items-center bg-blue-500">
       <h1 className="text-xl mb-4">Allocate Bets to Games</h1>
       <div className="w-full max-w-lg mb-4">
         {/* Submit your choices */}
         <button
-          className="p-8 border rounded bg-blue-500 text-white"
+          className={`p-8 border rounded text-white ${
+            submittable ? 'bg-blue-800' : 'bg-gray-500'
+          }`}
           onClick={() => {
             handleSubmission();
           }}
@@ -772,6 +848,7 @@ const Page: React.FC<{
         <div className="w-full max-w-lg mb-4">
           <div className="flex flex-col items-center">
             <h2 className="text-lg mb-2"> Current Selection :</h2>
+
             <span className="text-lg font-semibold">
               {selectedBet.type === 'spread'
                 ? `Spread: ${selectedBet.num_points}`
@@ -792,6 +869,17 @@ const Page: React.FC<{
                 return selectedGame ? (
                   <>
                     {selectedGame.home_team} @ {selectedGame.away_team}
+                    <GameDisplay
+                      game={selectedGame}
+                      bet={selectedBet}
+                      pick={
+                        choices.find(
+                          (choice) =>
+                            choice.bet_id ===
+                            sampleBets.findIndex((bet) => bet === selectedBet)
+                        ) || { bet_id: -1, game_id: '', pick: false }
+                      }
+                    />
                   </>
                 ) : null;
               })()}
@@ -1041,6 +1129,73 @@ type GameDisplayProps = {
 };
 
 const GameDisplay: React.FC<GameDisplayProps> = ({ game, bet, pick }) => {
+  //if a choice is provided - and the game has not finished
+  //then the choice is "pending" and a checkmark or x is not shown
+  //nor is an x - something like an open circle next to the choice should be shown
+
+  //if a choice is provided and the game is finished
+  //then an X or a checkmark should be shown next to the choice
+
+  //if a choice is not provided then nothing should be shown next to the choice
+
+  type Marker = 'nothing' | 'pending' | 'correct' | 'incorrect';
+
+  //there should be two markers -> one for the true and one for the false
+
+  const markers: Marker[] = useMemo(() => {
+    //if no choice -> then nothing/nothing
+    if (!pick) {
+      return ['nothing', 'nothing'];
+    }
+
+    if (!game.finished) {
+      //the pick is pending - the other is nothing
+      const pick_marker = pick.pick ? 'pending' : 'nothing';
+      const new_marker = ['nothing', 'nothing'];
+      new_marker[pick.pick ? 0 : 1] = 'pending';
+      return new_marker as Marker[];
+    }
+
+    if (bet.type === 'spread') {
+      return [
+        game.home_team_score - game.away_team_score > game.spread
+          ? 'correct'
+          : 'incorrect',
+        game.away_team_score - game.home_team_score > game.spread
+          ? 'correct'
+          : 'incorrect',
+      ];
+    }
+
+    if (bet.type === 'over_under') {
+      return [
+        game.home_team_score + game.away_team_score > game.over_under
+          ? 'correct'
+          : 'incorrect',
+        game.home_team_score + game.away_team_score < game.over_under
+          ? 'correct'
+          : 'incorrect',
+      ];
+    }
+
+    if (bet.type === 'moneyline') {
+      return [
+        game.home_team_score > game.away_team_score ? 'correct' : 'incorrect',
+        game.away_team_score > game.home_team_score ? 'correct' : 'incorrect',
+      ];
+    }
+
+    return ['nothing', 'nothing'];
+  }, [
+    pick,
+    game.finished,
+    game.home_team_score,
+    game.away_team_score,
+    game.spread,
+    game.over_under,
+    bet.type,
+  ]);
+
   if (!game) {
     return <div>Game not found</div>;
   }
@@ -1071,7 +1226,7 @@ const GameDisplay: React.FC<GameDisplayProps> = ({ game, bet, pick }) => {
   };
 
   return (
-    <div className="p-4 border rounded">
+    <div className="p-4 border rounded dark:bg-gray-700 bg:white text-gray-800 dark:text-gray-200">
       <div className="flex flex-col items-center">
         <span className="text-lg font-semibold mb-2">BET TYPE: {bet.type}</span>
         <span className="text-lg font-semibold mb-2">
@@ -1125,13 +1280,16 @@ const GameDisplay: React.FC<GameDisplayProps> = ({ game, bet, pick }) => {
             >
               {game.home_team} {game.spread > 0 ? '+' : ''}
               {game.spread}
-              {/* if selection was this one, place a checkmark or a x if correct/incorrect*/}
-              {pick.pick &&
-                (game.home_team_score - game.away_team_score > game.spread ? (
-                  <span className="ml-2 text-green-500">✔</span>
-                ) : (
-                  <span className="ml-2 text-red-500">X</span>
-                ))}
+              {
+                //icon for 2nd choice
+                markers[0] === 'correct' ? (
+                  <FaCheck className="ml-2 text-green-500" />
+                ) : markers[0] === 'incorrect' ? (
+                  <FaTimes className="ml-2 text-red-500" />
+                ) : markers[0] === 'pending' ? (
+                  <FaCircle className="ml-2 text-green-500" />
+                ) : null
+              }
             </button>
             <button
               className={`p-2 border rounded ${
@@ -1140,17 +1298,20 @@ const GameDisplay: React.FC<GameDisplayProps> = ({ game, bet, pick }) => {
                   : 'bg-white dark:bg-gray-700 dark:text-gray-200'
               }`}
             >
-              {game.away_team} {game.spread < 0 ? '+' : '-'}
-              {Math.abs(game.spread)}
-              {
-                //if selection was this one, place a checkmark or a x if correct/incorrect
-                pick.pick &&
-                  (game.away_team_score - game.home_team_score > game.spread ? (
-                    <span className="ml-2 text-green-500">✔</span>
-                  ) : (
-                    <span className="ml-2 text-red-500">X</span>
-                  ))
-              }
+              <div className="flex flex-row">
+                {game.away_team} {game.spread < 0 ? '+' : '-'}
+                {Math.abs(game.spread)}
+                {
+                  //icon for 2nd choice
+                  markers[1] === 'correct' ? (
+                    <FaCheck className="ml-2 text-green-500" />
+                  ) : markers[1] === 'incorrect' ? (
+                    <FaTimes className="ml-2 text-red-500" />
+                  ) : markers[1] === 'pending' ? (
+                    <FaCircle className="ml-2 text-green-500" />
+                  ) : null
+                }
+              </div>
             </button>
           </div>
         )}
@@ -1220,4 +1381,89 @@ const GameDisplay: React.FC<GameDisplayProps> = ({ game, bet, pick }) => {
   );
 };
 
+type GameDisplayPanelProps = {
+  game: FetchedGame;
+  selectChoice: (choice: boolean) => void;
+  choice?: boolean;
+};
+
+type FinishedGamedProps = {
+  result: boolean;
+  choice: boolean;
+};
+
+const GameDisplayPanel: React.FC<GameDisplayPanelProps> = ({
+  game,
+  selectChoice,
+}) => {
+  /*
+      Display What I have Above 
+      if the game is finished -> show the scores
+      if choice -> show the choice
+
+      if not finished -> and choice -> show the choice with "Pending" marker icon of some sort
+      if finished -> show checkmark or x depending on the result
+  
+      if finished and has a choice -> show the choice with a checkmark or x depending on the result
+      and the number of points
+      */
+
+  return (
+    <div className="p-4 border rounded dark:bg-gray-700 bg:white text-gray-800 dark:text-gray-200">
+      <div className="flex flex-col items-center dark:bg-gray-700 bg:white text-gray-800 dark:text-gray-200">
+        <span className="text-lg font-semibold mb-2">
+          {game.away_team} @ {game.home_team}
+        </span>
+        <div className="text-center mb-2">
+          {game.finished ? (
+            <>
+              <span className="text-xl font-bold text-red-700 dark:bg-gray-700 bg:white text-gray-800 dark:text-gray-200">
+                Game has finished
+              </span>
+              <div className="text-center mb-2">
+                <span>
+                  {game.away_team} {game.away_team_score} @ {game.home_team}{' '}
+                  {game.home_team_score}
+                </span>
+              </div>
+            </>
+          ) : new Date() >= game.kickoff ? (
+            <div>Pending ...</div>
+          ) : (
+            <div>
+              <span className="text-2xl font-bold">
+                {game.kickoff.toLocaleDateString()}{' '}
+                {game.kickoff.toLocaleTimeString()}
+              </span>
+            </div>
+          )}
+        </div>
+        <div className="text-center mb-2">
+          <span>
+            Kickoff: {game.kickoff.toLocaleDateString()}{' '}
+            {game.kickoff.toLocaleTimeString()}
+          </span>
+        </div>
+        <div className="flex gap-4 mt-2">
+          <button
+            className="p-2 border rounded"
+            onClick={() => {
+              selectChoice(true);
+            }}
+          >
+            {game.home_team} +{game.spread}
+          </button>
+          <button
+            className="p-2 border rounded"
+            onClick={() => {
+              selectChoice(false);
+            }}
+          >
+            {game.away_team} -{game.spread}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 export default PageWithQueryProvider;

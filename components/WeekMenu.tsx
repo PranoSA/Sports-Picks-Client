@@ -11,6 +11,9 @@ import { useGetWeeksForCurrentYear } from '@/queries/weeks';
 import { FaCheckCircle, FaClipboardList, FaClock } from 'react-icons/fa';
 import { use, useMemo, useState, useEffect } from 'react';
 
+//get games by week
+import { useGetGamesByWeek } from '@/queries/games';
+
 /**
  *
  * Here is how week menu will look ->
@@ -84,7 +87,7 @@ const WeekMenu: React.FC<WeekMenuProps> = ({ group }) => {
   const now = new Date();
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 text-black font-black">
       {weeks.map((week, index) => {
         const isPast = new Date(week.end_date) < now;
         const isCurrent =
@@ -129,6 +132,7 @@ const WeekMenu: React.FC<WeekMenuProps> = ({ group }) => {
                   <span className="ml-2">Results</span>
                 </Link>
               )}
+
               {/* If in future, show an clock with days, hours, minutes, seconds */}
               {isFuture && week_starts_in && (
                 <div>
@@ -141,6 +145,7 @@ const WeekMenu: React.FC<WeekMenuProps> = ({ group }) => {
                   </span>
                 </div>
               )}
+              <WeekMenuComponent week={week} />
             </div>
           </div>
         );
@@ -149,4 +154,52 @@ const WeekMenu: React.FC<WeekMenuProps> = ({ group }) => {
   );
 };
 
+const WeekMenuComponent: React.FC<{ week: FetchedWeek }> = ({ week }) => {
+  /* get games for the week */
+  const { data: games, isLoading, isError } = useGetGamesByWeek(week.week_id);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (isError) {
+    return <div>Error fetching games</div>;
+  }
+
+  if (!games) {
+    return <div>No games found</div>;
+  }
+
+  //now -> show the number of games that have started, the number of games that are pending
+  //and the number of games that are completed, and the total number of games
+
+  const games_started = games.filter((game) => {
+    return game.kickoff < new Date();
+  });
+
+  const games_pending = games.filter((game) => {
+    return game.kickoff < new Date() && !game.finished;
+  });
+
+  const games_completed = games.filter((game) => {
+    return game.finished === true;
+  });
+
+  const total_games = games.length;
+
+  //display this information in a nice way
+  return (
+    <div>
+      <h1>{week.week_name}</h1>
+      <div>
+        <div>
+          <h2>Games Started: {games_started.length}</h2>
+          <h2>Games Pending: {games_pending.length}</h2>
+          <h2>Games Completed: {games_completed.length}</h2>
+          <h2>Total Games: {total_games}</h2>
+        </div>
+      </div>
+    </div>
+  );
+};
 export default WeekMenu;

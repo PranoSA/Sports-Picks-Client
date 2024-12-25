@@ -238,11 +238,14 @@ const ScoreGraph: React.FC<{ scores: AllScores }> = ({ scores }) => {
       borderColor: `hsl(${(index * 360) / users.length}, 70%, 50%)`,
       backgroundColor: `hsl(${(index * 360) / users.length}, 70%, 50%, 0.5)`,
       fill: false,
+      //set height to 500px
+      height: 250,
     })),
   };
 
   const options = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'top' as const,
@@ -272,7 +275,9 @@ const ScoreGraph: React.FC<{ scores: AllScores }> = ({ scores }) => {
   return (
     <div>
       <h2 className="text-xl font-bold mb-4">Score Graph</h2>
-      <Line data={data} options={options} />
+      <div className="" style={{ height: 500 }}>
+        <Line data={data} options={options} height={300} />
+      </div>
     </div>
   );
 };
