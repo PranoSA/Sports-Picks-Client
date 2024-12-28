@@ -18,6 +18,7 @@ import {
   Bet,
   FetchedGame,
   InsertionChoice,
+  Choice,
   //something for an open circle / pending
 } from '@/types/bets_and_odds';
 
@@ -73,6 +74,8 @@ const Page: React.FC<{
   const [selectedBet, setSelectedBet] = useState<Bet | null>(null);
 
   const [selectedGame, setSelectedGame] = useState<number | null>(null);
+
+  const [viewSelections, setViewSelections] = useState<boolean>(false);
 
   //don't need allocated bets -> the choices will have acorresponding bet_id
   // that infers information about the bet being allocated or not
@@ -157,6 +160,17 @@ const Page: React.FC<{
 
     //sort the not started games
     const sortedNotStartedGames = notStartedGames.sort((a, b) => {
+      //check if either has started -> the one that started should go after
+
+      const first_has_started = new Date() >= a.kickoff;
+      const second_has_started = new Date() >= b.kickoff;
+
+      if (first_has_started && !second_has_started) {
+        return 1;
+      } else if (!first_has_started && second_has_started) {
+        return -1;
+      }
+
       if (a.kickoff < b.kickoff) {
         return -1;
       } else if (a.kickoff > b.kickoff) {
@@ -747,8 +761,9 @@ const Page: React.FC<{
   };
 
   return (
-    <div className="p-4 flex flex-col items-center bg-blue-500">
-      <h1 className="text-xl mb-4">Allocate Bets to Games</h1>
+    <div className="p-4 flex flex-col items-center bg-gray-500">
+      {/* Options Between showing selections vs choosing bets */}
+      <div className="w-full max-w-lg mb-4"></div>
       <div className="w-full max-w-lg mb-4">
         {/* Submit your choices */}
         <button
@@ -877,7 +892,12 @@ const Page: React.FC<{
                           (choice) =>
                             choice.bet_id ===
                             sampleBets.findIndex((bet) => bet === selectedBet)
-                        ) || { bet_id: -1, game_id: '', pick: false }
+                        ) ||
+                        ({
+                          bet_id: -1,
+                          game_id: '',
+                          pick: false,
+                        } as InsertionChoice)
                       }
                     />
                   </>
@@ -1078,37 +1098,6 @@ const Page: React.FC<{
           </ul>
         </div>
       )}
-      <div className="w-full max-w-lg mt-4">
-        <h2 className="text-lg mb-2">Summary of Selections</h2>
-        <ul className="space-y-2">
-          {Object.values(allocatedBets).map(
-            (allocatedBet, index) =>
-              allocatedBet && (
-                <li
-                  key={index}
-                  className="p-2 border rounded bg-white dark:bg-gray-700 dark:text-gray-200"
-                >
-                  <span>
-                    Bet:{' '}
-                    <GameDisplay
-                      game={games[allocatedBet.gameIndex]}
-                      bet={allocatedBet.bet}
-                      pick={
-                        choices.find(
-                          (choice) =>
-                            choice.bet_id ===
-                            sampleBets.findIndex(
-                              (bet) => bet === allocatedBet.bet
-                            )
-                        ) || { bet_id: -1, game_id: '', pick: false }
-                      }
-                    />
-                  </span>
-                </li>
-              )
-          )}
-        </ul>
-      </div>
     </div>
   );
 };
@@ -1121,6 +1110,54 @@ const Page: React.FC<{
  *
  *
  */
+
+type SummaryOfSelectionsProps = {
+  allocatedBets: Record<number, { bet: Bet; gameIndex: number }>;
+  games: FetchedGame[];
+  choices: InsertionChoice[];
+  sampleBets: Bet[];
+};
+
+const SummaryOfSelectionsComponent: React.FC<SummaryOfSelectionsProps> = ({
+  allocatedBets,
+  games,
+  choices,
+  sampleBets,
+}) => {
+  return (
+    <div className="w-full max-w-lg mt-4">
+      <h2 className="text-lg mb-2">Summary of Selections</h2>
+      <ul className="space-y-2">
+        {Object.values(allocatedBets).map(
+          (allocatedBet, index) =>
+            allocatedBet && (
+              <li
+                key={index}
+                className="p-2 border rounded bg-white dark:bg-gray-700 dark:text-gray-200"
+              >
+                <span>
+                  Bet:{' '}
+                  <GameDisplay
+                    game={games[allocatedBet.gameIndex]}
+                    bet={allocatedBet.bet}
+                    pick={
+                      choices.find(
+                        (choice) =>
+                          choice.bet_id ===
+                          sampleBets.findIndex(
+                            (bet) => bet === allocatedBet.bet
+                          )
+                      ) || { bet_id: -1, game_id: '', pick: false }
+                    }
+                  />
+                </span>
+              </li>
+            )
+        )}
+      </ul>
+    </div>
+  );
+};
 
 type GameDisplayProps = {
   game: FetchedGame;

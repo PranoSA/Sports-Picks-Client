@@ -17,7 +17,6 @@ import { SessionProvider } from 'next-auth/react';
 import queryClient from '@/queries/queryclient';
 import React from 'react';
 import { signIn, useSession } from 'next-auth/react';
-import { Session } from 'next-auth';
 
 import { useEffect } from 'react';
 
@@ -50,6 +49,10 @@ const JoinPage: React.FC<{
   const joinGroup = useJoinGroup();
 
   console.log('id', id);
+  //set to dark mode
+  useEffect(() => {
+    document.body.classList.add('dark');
+  }, []);
 
   useEffect(() => {
     //set local storage bearer token
@@ -65,10 +68,21 @@ const JoinPage: React.FC<{
 
   const joinGroupSubmission = async () => {
     //call the join group mutation
-    await joinGroup.mutateAsync({
+    const res = await joinGroup.mutateAsync({
       group_id: id,
       passcode: '',
     });
+
+    console.log('res', res);
+
+    //if error, alert the user
+    if (!res) {
+      alert('Error joining group');
+      return;
+    }
+
+    //if success, redirect to the group page
+    window.location.href = `/group/${id}`;
 
     //redirect to the group page
   };
@@ -77,10 +91,24 @@ const JoinPage: React.FC<{
     return <div>Loading...</div>;
   }
 
-  if (!session.data) {
+  if (!session) {
     return (
-      <div>
-        <button onClick={() => signIn('keycloak')}>Sign in</button>
+      <div className="grid place-items-center h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+        <div className="text-center p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md">
+          <h1 className="text-3xl font-bold mb-4">
+            Welcome to Sports Betting App
+          </h1>
+          <p className="mb-6">
+            This app allows you to create groups, make choices, and track your
+            bets. Join now and start making your picks!
+          </p>
+          <button
+            onClick={() => signIn('keycloak')}
+            className="p-4 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 transition duration-300"
+          >
+            Login
+          </button>
+        </div>
       </div>
     );
   }
@@ -94,15 +122,26 @@ const JoinPage: React.FC<{
   }
 
   return (
-    <div>
-      <h1>Join {group.group_name}</h1>
-      <p>Are you sure you want to join this group?</p>
-      <button
-        onClick={joinGroupSubmission}
-        className="p-4 bg-blue-500 text-white rounded-lg shadow-md"
-      >
-        Join
-      </button>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 p-4">
+      <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg max-w-md w-full">
+        <h1 className="text-2xl font-bold mb-4 text-center text-gray-900 dark:text-gray-100">
+          Join {group.group_name}
+        </h1>
+        <p className="mb-6 text-center text-gray-700 dark:text-gray-300">
+          Are you sure you want to join this group?
+        </p>
+        {/* another pargraph with group details */}
+        <div className="mb-6">
+          <span className="font-semibold">Group : {group.group_name} </span>{' '}
+          {id}
+        </div>
+        <button
+          onClick={joinGroupSubmission}
+          className="w-full p-4 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 transition duration-300"
+        >
+          Join
+        </button>
+      </div>
     </div>
   );
 };

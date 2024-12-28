@@ -56,8 +56,6 @@ function Home() {
   //const { data: session } = useSession() as { data: Session | null };
   const { data: session, status } = useSession();
 
-  console.log('session', session);
-
   //set to dark mode
   useEffect(() => {
     document.body.classList.add('dark');
@@ -160,6 +158,17 @@ const ListOfGroupsComponent = () => {
                 {/* */}
               </div>
             </Link>
+            {/* Button to copy a "join code" */}
+            <button
+              className="p-2 bg-blue-500 text-white rounded-lg shadow-md"
+              onClick={() => {
+                navigator.clipboard.writeText(
+                  `sportspicks.compressibleflowcalculator.com/group/${group.group_id}/join`
+                );
+              }}
+            >
+              Copy Join Code
+            </button>
             <GroupPad group={group} />
           </li>
         ))}
