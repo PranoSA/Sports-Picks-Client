@@ -60,10 +60,7 @@ export const useAddPicks = (
         return;
       }
 
-      // update the cache
-      const picksNow = [...oldPicks, ...newPicks];
-
-      queryClient.setQueryData(['picks', groupid], picksNow);
+      queryClient.setQueryData(['picks', groupid], newPicks);
     },
   });
 };
@@ -80,6 +77,17 @@ const getPicks = async (group_id: string): Promise<FetchedChoice[]> => {
   if (!res.ok) {
     throw new Error('Network response was not okay');
   }
+
+  const picks = await res.json();
+
+  //filter picks -> only one of a particular bet_id
+  const filteredPicks = picks.filter(
+    (pick: FetchedChoice, index: number, self: FetchedChoice[]) => {
+      return index === self.findIndex((t) => t.bet_id === pick.bet_id);
+    }
+  );
+
+  return filteredPicks;
 
   return res.json();
 };

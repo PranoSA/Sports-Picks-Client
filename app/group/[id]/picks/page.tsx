@@ -29,9 +29,15 @@ import {
   FaCircle,
   FaCheck,
   FaTimes,
+  //Lock and unlocked icons
+  FaLock,
+  FaLockOpen,
+  //timing glass icon
+  FaHourglassHalf,
+  FaSpinner,
 } from 'react-icons/fa';
 
-import { use, useEffect, useMemo, useState } from 'react';
+import { use, useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 
 import queryClient from '@/queries/queryclient';
@@ -81,6 +87,8 @@ const Page: React.FC<{
   // that infers information about the bet being allocated or not
   const [choices, setChoices] = useState<InsertionChoice[]>([]);
 
+  const choicesRef = useRef<InsertionChoice[]>(choices);
+
   //on mount -> set the choices to the fetched choices
   const {
     data: picks,
@@ -95,6 +103,11 @@ const Page: React.FC<{
   //set choices to the picks when picks are fetched
   useEffect(() => {
     if (picks) {
+      //if choices has already been set -> then don't set it again
+      if (choices.length > 0) {
+        return;
+      }
+
       //turn picks into InsertionPicks
       const picks_made: InsertionChoice[] = picks.map((pick) => {
         return {
@@ -104,9 +117,29 @@ const Page: React.FC<{
         };
       });
 
+      //set choices if the picks are not the same
+
+      /*const check_if_same = picks_made.every((pick, index) => {
+        //if choices[index] does not exist, then return false
+        if (!choices[index]) {
+          return false;
+        }
+
+        const choice = choices[index];
+        return (
+          pick.bet_id === choice.bet_id &&
+          pick.game_id === choice.game_id &&
+          pick.pick === choice.pick
+        );
+      }, true);
+
+      if (!check_if_same) {
+        setChoices(picks_made);
+      }*/
+      console.log('Setting Choices');
       setChoices(picks_made);
     }
-  }, [picks]);
+  }, [choices, picks]);
 
   //submittable is true if changes have been made
   const submittable = useMemo(() => {
@@ -208,9 +241,10 @@ const Page: React.FC<{
 
   const submitPicks = useAddPicks(id);
 
-  const handleSubmission = () => {
+  const handleSubmission = useCallback(() => {
+    console.log('Handling Submission');
     submitPicks.mutate(choices);
-  };
+  }, [choices, submitPicks]);
 
   const handleBetSelection = (bet: Bet) => {
     setSelectedBet(bet);
@@ -419,9 +453,6 @@ const Page: React.FC<{
       }
     });
 
-    console.log('games', games);
-    console.log('allocatedBets', allocatedBets);
-
     return allocatedBets;
   }, [choices, games, sampleBets]);
 
@@ -441,6 +472,11 @@ const Page: React.FC<{
     game: FetchedGame,
     selection: number
   ) => {
+    console.log('Handling Game Selection');
+    console.log('Bet Index', betIndex);
+    console.log('Game', game);
+    console.log('Selection', selection);
+
     if ((selectedBet && new Date() < game.kickoff) || true) {
       // find if a choice already exists for this bet -> bet_id = betIndex
 
@@ -460,14 +496,31 @@ const Page: React.FC<{
           pick: selection === 1 ? true : false,
         };
 
+        console.log('Index of Choice', index_of_choice);
+
+        console.log('New Choices :', [
+          ...old_choices.slice(0, index_of_choice),
+          new_choice,
+          ...old_choices.slice(index_of_choice + 1),
+        ]);
+
         const new_choices = [
           ...old_choices.slice(0, index_of_choice),
           new_choice,
           ...old_choices.slice(index_of_choice + 1),
         ];
-
+        console.log('Setting Choices', new_choices);
         setChoices(new_choices);
+        choicesRef.current = new_choices;
+        //handleSubmission();
       } else {
+        console.log('New Choices :', ...old_choices, {
+          bet_id: betIndex,
+          game_id: game.game_id,
+          pick: selection === 1 ? true : false,
+        });
+
+        console.log('Setting Choices');
         //add the choice to the choices
         setChoices([
           ...old_choices,
@@ -478,6 +531,16 @@ const Page: React.FC<{
           },
         ]);
       }
+
+      choicesRef.current = [
+        ...old_choices,
+        {
+          bet_id: betIndex,
+          game_id: game.game_id,
+          pick: selection === 1 ? true : false,
+        },
+      ];
+      //handleSubmission();
 
       /*modifyChoices({
         bet_id: betIndex,
@@ -502,7 +565,7 @@ const Page: React.FC<{
   const gamesSelectedForTypeSpread: FetchedGame[] = useMemo(() => {
     //get all allocated Bets where the type is spread
     const spreadBets = Object.values(allocatedBets).filter(
-      (allocatedBet) => allocatedBet?.bet.type === 'spread'
+      (allocatedBet) => allocatedBet?.bet?.type === 'spread'
     );
 
     // get all the choices for which the bet_id corresponds to an index
@@ -535,7 +598,7 @@ const Page: React.FC<{
   const gamesSelectedForTypeOverUnder: FetchedGame[] = useMemo(() => {
     //get all allocated Bets where the type is spread
     const overUnderBets = Object.values(allocatedBets).filter(
-      (allocatedBet) => allocatedBet?.bet.type === 'over_under'
+      (allocatedBet) => allocatedBet?.bet?.type === 'over_under'
     );
 
     // get all the choices for which the bet_id corresponds to an index
@@ -553,7 +616,7 @@ const Page: React.FC<{
   const gamesSelectedForTypeMoneyline: FetchedGame[] = useMemo(() => {
     //get all allocated Bets where the type is spread
     const moneylineBets = Object.values(allocatedBets).filter(
-      (allocatedBet) => allocatedBet?.bet.type === 'moneyline'
+      (allocatedBet) => allocatedBet?.bet?.type === 'moneyline'
     );
 
     // get all the choices for which the bet_id corresponds to an index
@@ -680,12 +743,8 @@ const Page: React.FC<{
         return 'hasnt-started';
       }
 
-      console.log('Game Kickoff', game.kickoff);
-      console.log('Game Current Time', new Date());
-
       //check if the game has started
       if (new Date() >= game.kickoff) {
-        console.log(game, 'is in progress');
         //check if game has been finished/scores
         if (game.finished) {
           //check th result of the game
@@ -735,6 +794,24 @@ const Page: React.FC<{
     return sampleBets.map((bet) => beStatus(bet));
   }, [choices, games, sampleBets]);
 
+  //automatically submit the picks when things have changed
+  /* useEffect(() => {
+    if (submittable) {
+      handleSubmission();
+    }
+  }, [handleSubmission, submittable]);
+*/
+
+  //submitable is nonsense -> just submit the picks when they change
+  useEffect(() => {
+    //handleSubmission();
+    console.log('I AM HERE');
+    console.log('Choices', choices);
+    if (choicesRef.current.length > 0) {
+      handleSubmission();
+    }
+  }, [choices]);
+
   if (gamesLoading || groupLoading) {
     return <div>Loading...</div>;
   }
@@ -760,8 +837,13 @@ const Page: React.FC<{
     }
   };
 
+  const clearChoice = (betIndex: number) => {
+    //find the choice corresponding to the betIndex
+    const choice = choices.find((choice) => choice.bet_id === betIndex);
+  };
+
   return (
-    <div className="p-4 flex flex-col items-center bg-gray-500">
+    <div className="p-4 flex flex-col items-center bg-gray-500 border-4 ">
       {/* Options Between showing selections vs choosing bets */}
       <div className="w-full max-w-lg mb-4">
         {viewSelections ? (
@@ -771,21 +853,15 @@ const Page: React.FC<{
               games={games}
               sampleBets={sampleBets}
               allocatedBets={allocatedBets}
-            />
-            {/* Button to go back to selecting bets */}
-            <button
-              className="p-8 border rounded bg-blue-500 text-white"
-              onClick={() => {
+              closeModal={() => {
                 setViewSelections(false);
               }}
-            >
-              Go Back
-            </button>
+            />
           </>
         ) : (
           ///buttons to show selections
           <button
-            className="p-8 border rounded bg-blue-500 text-white"
+            className="p-2 border rounded bg-blue-500 text-white"
             onClick={() => {
               setViewSelections(true);
             }}
@@ -796,22 +872,12 @@ const Page: React.FC<{
       </div>
 
       <div className="w-full max-w-lg mb-4">
-        {/* Submit your choices */}
-        <button
-          className={`p-8 border rounded text-white ${
-            submittable ? 'bg-blue-800' : 'bg-gray-500'
-          }`}
-          onClick={() => {
-            handleSubmission();
-          }}
-        >
-          Submit Choices
-        </button>
         {/* Clear your choices */}
         <button
           className="p-8 border rounded bg-red-500 text-white"
           onClick={() => {
             clearChoices();
+            //handleSubmission();
           }}
         >
           Clear Choices
@@ -859,9 +925,15 @@ const Page: React.FC<{
               seconds: 0,
             };
 
+            let game_for_bet: FetchedGame | undefined = undefined;
+
+            let choice_for_bet: InsertionChoice | undefined = undefined;
+
             if (gameIndex !== -1 && typeof gameIndex !== 'undefined') {
               //get the game corresponding to the gameIndex
               const game = games[gameIndex];
+
+              game_for_bet = game;
 
               has_made_pick = true;
 
@@ -893,6 +965,8 @@ const Page: React.FC<{
 
               //check if the choice is correct
               const choice = choices.find((choice) => choice.bet_id === index);
+
+              choice_for_bet = choice;
 
               //if the choice exists
               if (choice) {
@@ -942,17 +1016,67 @@ const Page: React.FC<{
             //if started - make it red and not clickable
             //if finished - make it green or red based on the result
 
+            //string for home team
+            //if home team was not picked -> empty string
+            //if is picked, then should be like
+            /*
+            for spread -> the spread shown for home team
+            for over under -> empty string
+            for moneyline -> the moneyline shown
+            */
+            const home_team_string =
+              bet.type === 'spread'
+                ? //make sure pick
+
+                  choice_for_bet?.pick
+                  ? `(${game_for_bet?.spread || 0 > 0 ? '+' : ''} ${Math.abs(
+                      game_for_bet?.spread || 0
+                    )})`
+                  : ''
+                : bet.type === 'over_under'
+                ? ''
+                : choice_for_bet?.pick
+                ? ` (
+                
+                ${game_for_bet?.moneyline || 0 > 0 ? '+' : ''}
+                ${game_for_bet?.moneyline})`
+                : '';
+            /*
+                away_game_string
+                //for spread -> the spread shown for the away team
+                //for over under -> the under or over shown
+                //for moneyline -> the moneyline shown
+              */
+
+            const away_team_string =
+              bet.type === 'spread'
+                ? !choice_for_bet?.pick
+                  ? `(${game_for_bet?.spread || 0 > 0 ? '+' : ''} ${Math.abs(
+                      game_for_bet?.spread || 0
+                    )})`
+                  : ''
+                : bet.type === 'over_under'
+                ? choice_for_bet?.pick
+                  ? `(Over ${game_for_bet?.over_under})`
+                  : `(Under ${game_for_bet?.over_under})`
+                : !choice_for_bet?.pick
+                ? ` (
+                  
+                  ${0 - (game_for_bet?.moneyline ?? 0) > 0 ? '+' : ''}
+                  ${0 - (game_for_bet?.moneyline ?? 0)})`
+                : '';
+
             return (
               <li
                 key={index}
                 className={`p-2 border rounded cursor-pointer 
                 ${
                   bet_statuses[index] === 'in-progress'
-                    ? 'bg-yellow-500 text-black'
+                    ? 'bg-yellow-200 text-black'
                     : bet_statuses[index] === 'success'
                     ? 'bg-green-500 text-white'
                     : bet_statuses[index] === 'fail'
-                    ? 'bg-red-500 text-white'
+                    ? 'bg-red-200 text-white'
                     : 'bg-white dark:bg-gray-700 dark:text-gray-200'
                 }
                   `}
@@ -969,14 +1093,6 @@ const Page: React.FC<{
                     (game) => game.game_id === choice?.game_id
                   );
 
-                  console.log('Bet status', bet_statuses);
-
-                  //print corresponding game
-                  console.log('Game corresponding to bet', game);
-
-                  //print nicely formatted time in local time
-                  console.log('Kickoff time', game?.kickoff.toLocaleString());
-
                   if (bet_statuses[index] !== 'hasnt-started') {
                     return;
                   }
@@ -989,10 +1105,27 @@ const Page: React.FC<{
                   : bet.type === 'over_under'
                   ? `Over/Under: ${bet.num_points}`
                   : `Moneyline : ${bet.num_points}`}
-                {Object.values(allocatedBets).some(
-                  (allocatedBet) =>
-                    allocatedBet?.bet === bet && allocatedBet.gameIndex !== -1
-                ) && <span className="ml-2 text-green-500">✔</span>}
+                {is_correct && has_finished && (
+                  <span className="ml-2 text-green-500">
+                    <FaCheck className="text-green-500" size={20} />
+                  </span>
+                )}
+                {
+                  !is_correct && has_finished && (
+                    <span className="ml-2 text-red-500">
+                      <FaTimes className="text-red-500" size={20} />
+                    </span>
+                  ) //if the choice is wrong and the game has finished
+                }
+                {
+                  //pending
+                  has_started && !has_finished && (
+                    <span className="ml-2 text-yellow-500">
+                      ⌛
+                      <FaSpinner className="animate-spin" size={20} />
+                    </span>
+                  )
+                }
 
                 {/* Information on time left if the bet has no started */}
                 <div className="text-sm">
@@ -1003,248 +1136,294 @@ const Page: React.FC<{
                     </span>
                   )}
                 </div>
+
+                {/* If has started -> show a lock */}
+                {has_started && (
+                  <FaLock className="ml-2 text-red-500" size={20} />
+                )}
+                {/* IF Has not started -> show a unlock */}
+                {!has_started && (
+                  <FaLockOpen className="ml-2 text-green-500" size={20} />
+                )}
+
+                {
+                  game_for_bet && (
+                    <span className="ml-2 text-sm text-black">
+                      {game_for_bet.home_team}
+                      {home_team_string} @ {game_for_bet.away_team}{' '}
+                      {away_team_string}
+                    </span>
+                  ) //if the game has finished
+                }
+
+                {/* If has finished -> show a checkmark */}
               </li>
             );
           })}
         </ul>
       </div>
+      {/* Make this more of a modal */}
       {selectedBet && (
-        <div className="w-full max-w-lg mb-4">
-          <div className="flex flex-col items-center">
-            <h2 className="text-lg mb-2"> Current Selection :</h2>
+        <div
+          className="w-full
+          border-8 border-blue-800
+          fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 overflow-y-auto "
+          onClick={() => {
+            setSelectedBet(null);
+            setSelectedGame(null);
+          }}
+        >
+          <FaTimes
+            className="absolute top-2 right-2 cursor-pointer text-blue-700"
+            onClick={() => {
+              setSelectedBet(null);
+              setSelectedGame(null);
+            }}
+            size={30}
+          />
+          <div
+            className="w-4/5 
+            max-h-full
+            mt-10 p-4 rounded bg-white relative flex flex-row flex-wrap overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex flex-col items-center text-black">
+              <h2 className="text-lg mb-2 text-black"> Current Selection :</h2>
 
-            <span className="text-lg font-semibold">
-              {selectedBet.type === 'spread'
-                ? `Spread: ${selectedBet.num_points}`
-                : selectedBet.type === 'over_under'
-                ? `Over/Under: ${selectedBet.num_points}`
-                : `Moneyline : ${selectedBet.num_points}`}
-            </span>
-            <div>
-              {(() => {
-                console.log('Selected Bet', selectedBet);
-                const selectedBetIndex =
-                  allocatedBets[
-                    sampleBets.findIndex((bet) => bet === selectedBet)
-                  ];
-                console.log('Selected Bet Index', selectedBetIndex);
-                const selectedGameIndex = selectedBetIndex?.gameIndex;
-                const selectedGame = games[selectedGameIndex];
-                return selectedGame ? (
-                  <>
-                    {selectedGame.home_team} @ {selectedGame.away_team}
-                    <GameDisplay
-                      game={selectedGame}
-                      bet={selectedBet}
-                      pick={
-                        choices.find(
-                          (choice) =>
-                            choice.bet_id ===
-                            sampleBets.findIndex((bet) => bet === selectedBet)
-                        ) ||
-                        ({
-                          bet_id: -1,
-                          game_id: '',
-                          pick: false,
-                        } as InsertionChoice)
-                      }
-                    />
-                  </>
-                ) : null;
-              })()}
+              <span className="text-lg font-semibold text-black">
+                {selectedBet.type === 'spread'
+                  ? `Spread: ${selectedBet.num_points}`
+                  : selectedBet.type === 'over_under'
+                  ? `Over/Under: ${selectedBet.num_points}`
+                  : `Moneyline : ${selectedBet.num_points}`}
+              </span>
+              <div>
+                {(() => {
+                  const selectedBetIndex =
+                    allocatedBets[
+                      sampleBets.findIndex((bet) => bet === selectedBet)
+                    ];
+
+                  const selectedGameIndex = selectedBetIndex?.gameIndex;
+                  const selectedGame = games[selectedGameIndex];
+                  return selectedGame ? (
+                    <>
+                      {selectedGame.home_team} @ {selectedGame.away_team}
+                      <GameDisplay
+                        game={selectedGame}
+                        bet={selectedBet}
+                        pick={
+                          choices.find(
+                            (choice) =>
+                              choice.bet_id ===
+                              sampleBets.findIndex((bet) => bet === selectedBet)
+                          ) ||
+                          ({
+                            bet_id: -1,
+                            game_id: '',
+                            pick: false,
+                          } as InsertionChoice)
+                        }
+                      />
+                    </>
+                  ) : null;
+                })()}
+              </div>
             </div>
-          </div>
 
-          <h2 className="text-lg mb-2">Select Game for Bet</h2>
-          <ul className="space-y-4">
-            {gamesToMap.map((game, index) => (
-              <li
-                key={index}
-                className={`p-4 border rounded mb-4 ${
-                  new Date() >= game.kickoff
-                    ? 'bg-red-500 text-white'
-                    : 'bg-white dark:bg-gray-700 dark:text-white'
-                }`}
-              >
-                <div className="flex flex-col items-center">
-                  <span className="text-lg font-semibold mb-2">
-                    {game.away_team} @ {game.home_team}
-                  </span>
-                  <div className="text-center mb-2">
-                    {gameHasStarted(game) ? (
-                      <span className="text-xl font-bold text-red-700">
-                        Game has started
-                      </span>
-                    ) : (
-                      <div>
-                        <span className="text-2xl font-bold">
-                          {timeLefts[index].days}d {timeLefts[index].hours}h{' '}
-                          {timeLefts[index].minutes}m {timeLefts[index].seconds}
-                          s
+            <h2 className="text-lg mb-2">Select Game for Bet</h2>
+            <ul className="flex-row flex-wrap flex">
+              {gamesToMap.map((game, index) => (
+                <li
+                  key={index}
+                  className={`
+                    w-1/2
+                    p-4 border rounded mb-4 ${
+                      new Date() >= game.kickoff
+                        ? 'bg-red-500 text-white'
+                        : 'bg-white dark:bg-gray-700 dark:text-white'
+                    }`}
+                >
+                  <div className="flex flex-col items-center">
+                    <span className="text-lg font-semibold mb-2">
+                      {game.away_team} @ {game.home_team}
+                    </span>
+                    <div className="text-center mb-2">
+                      {gameHasStarted(game) ? (
+                        <span className="text-xl font-bold text-red-700">
+                          Game has started
                         </span>
-                        <div className="text-sm">
-                          <span>days</span> <span>hours</span>{' '}
-                          <span>minutes</span> <span>seconds</span>
+                      ) : (
+                        <div>
+                          <span className="text-2xl font-bold">
+                            {timeLefts[index].days}d {timeLefts[index].hours}h{' '}
+                            {timeLefts[index].minutes}m{' '}
+                            {timeLefts[index].seconds}s
+                          </span>
+                          <div className="text-sm">
+                            <span>days</span> <span>hours</span>{' '}
+                            <span>minutes</span> <span>seconds</span>
+                          </div>
                         </div>
+                      )}
+                    </div>
+                    <div className="text-center mb-2">
+                      <span>
+                        Kickoff: {game.kickoff.toLocaleDateString()}{' '}
+                        {game.kickoff.toLocaleTimeString()}
+                      </span>
+                    </div>
+                    {selectedBet.type === 'spread' && (
+                      <div className="flex gap-4 mt-2">
+                        <button
+                          className={`p-2 border rounded ${
+                            selectedGame === index &&
+                            selectedBet &&
+                            selectedBet.type === 'spread' &&
+                            selectedBet.num_points > 0
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-white dark:bg-gray-700 dark:text-gray-200'
+                          }`}
+                          onClick={() => {
+                            if (new Date() >= game.kickoff) {
+                              alert('Game has already started');
+                              return;
+                            }
+                            const index_of_bet = sampleBets.findIndex(
+                              (bet) => bet === selectedBet
+                            );
+                            handleGameSelection(index_of_bet, game, 1);
+                          }}
+                        >
+                          {game.home_team} {game.spread > 0 ? '+' : ''}
+                          {game.spread}
+                        </button>
+                        <button
+                          className={`p-2 border rounded ${
+                            selectedGame === index &&
+                            selectedBet &&
+                            selectedBet.type === 'spread' &&
+                            selectedBet.num_points < 0
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-white dark:bg-gray-700 dark:text-gray-200'
+                          }`}
+                          onClick={() => {
+                            if (new Date() >= game.kickoff) {
+                              alert('Game has already started');
+                              return;
+                            }
+                            const index_of_bet = sampleBets.findIndex(
+                              (bet) => bet === selectedBet
+                            );
+                            handleGameSelection(index_of_bet, game, 0);
+                          }}
+                        >
+                          {game.away_team} {game.spread < 0 ? '+' : '-'}
+                          {Math.abs(game.spread)}
+                        </button>
+                      </div>
+                    )}
+                    {selectedBet.type === 'over_under' && (
+                      <div className="flex gap-4 mt-2">
+                        <button
+                          className={`p-2 border rounded ${
+                            selectedGame === index &&
+                            selectedBet &&
+                            selectedBet.type === 'over_under' &&
+                            selectedBet.num_points > 0
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-white dark:bg-gray-700 dark:text-gray-200'
+                          }`}
+                          onClick={() => {
+                            if (new Date() >= game.kickoff) {
+                              alert('Game has already started');
+                              return;
+                            }
+                            const index_of_bet = sampleBets.findIndex(
+                              (bet) => bet === selectedBet
+                            );
+                            handleGameSelection(index_of_bet, game, 1);
+                          }}
+                        >
+                          Over ({game.over_under})
+                        </button>
+                        <button
+                          className={`p-2 border rounded ${
+                            selectedGame === index &&
+                            selectedBet &&
+                            selectedBet.type === 'over_under' &&
+                            selectedBet.num_points < 0
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-white dark:bg-gray-700 dark:text-gray-200'
+                          }`}
+                          onClick={() => {
+                            if (new Date() >= game.kickoff) {
+                              alert('Game has already started');
+                              return;
+                            }
+                            const index_of_bet = sampleBets.findIndex(
+                              (bet) => bet === selectedBet
+                            );
+                            handleGameSelection(index_of_bet, game, 0);
+                          }}
+                        >
+                          Under ({game.over_under})
+                        </button>
+                      </div>
+                    )}
+                    {selectedBet.type === 'moneyline' && (
+                      <div className="flex gap-4 mt-2">
+                        <button
+                          className={`p-2 border rounded ${
+                            selectedGame === index &&
+                            selectedBet &&
+                            selectedBet.type === 'moneyline' &&
+                            selectedBet.num_points > 0
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-white dark:bg-gray-700 dark:text-gray-200'
+                          }`}
+                          onClick={() => {
+                            if (new Date() >= game.kickoff) {
+                              alert('Game has already started');
+                              return;
+                            }
+                            const index_of_bet = sampleBets.findIndex(
+                              (bet) => bet === selectedBet
+                            );
+                            handleGameSelection(index_of_bet, game, 1);
+                          }}
+                        >
+                          {game.home_team} Moneyline {game.moneyline}
+                        </button>
+                        <button
+                          className={`p-2 border rounded ${
+                            selectedGame === index &&
+                            selectedBet &&
+                            selectedBet.type === 'moneyline' &&
+                            selectedBet.num_points < 0
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-white dark:bg-gray-700 dark:text-gray-200'
+                          }`}
+                          onClick={() => {
+                            if (new Date() >= game.kickoff) {
+                              alert('Game has already started');
+                              return;
+                            }
+                            const index_of_bet = sampleBets.findIndex(
+                              (bet) => bet === selectedBet
+                            );
+                            handleGameSelection(index_of_bet, game, 0);
+                          }}
+                        >
+                          {game.away_team} Moneyline
+                        </button>
                       </div>
                     )}
                   </div>
-                  <div className="text-center mb-2">
-                    <span>
-                      Kickoff: {game.kickoff.toLocaleDateString()}{' '}
-                      {game.kickoff.toLocaleTimeString()}
-                    </span>
-                  </div>
-                  {selectedBet.type === 'spread' && (
-                    <div className="flex gap-4 mt-2">
-                      <button
-                        className={`p-2 border rounded ${
-                          selectedGame === index &&
-                          selectedBet &&
-                          selectedBet.type === 'spread' &&
-                          selectedBet.num_points > 0
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-white dark:bg-gray-700 dark:text-gray-200'
-                        }`}
-                        onClick={() => {
-                          if (new Date() >= game.kickoff) {
-                            alert('Game has already started');
-                            // return;
-                          }
-                          const index_of_bet = sampleBets.findIndex(
-                            (bet) => bet === selectedBet
-                          );
-                          handleGameSelection(index_of_bet, game, 1);
-                        }}
-                      >
-                        {game.home_team} {game.spread > 0 ? '+' : ''}
-                        {game.spread}
-                      </button>
-                      <button
-                        className={`p-2 border rounded ${
-                          selectedGame === index &&
-                          selectedBet &&
-                          selectedBet.type === 'spread' &&
-                          selectedBet.num_points < 0
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-white dark:bg-gray-700 dark:text-gray-200'
-                        }`}
-                        onClick={() => {
-                          if (new Date() >= game.kickoff) {
-                            alert('Game has already started');
-                            //return;
-                          }
-                          const index_of_bet = sampleBets.findIndex(
-                            (bet) => bet === selectedBet
-                          );
-                          handleGameSelection(index_of_bet, game, 0);
-                        }}
-                      >
-                        {game.away_team} {game.spread < 0 ? '+' : '-'}
-                        {Math.abs(game.spread)}
-                      </button>
-                    </div>
-                  )}
-                  {selectedBet.type === 'over_under' && (
-                    <div className="flex gap-4 mt-2">
-                      <button
-                        className={`p-2 border rounded ${
-                          selectedGame === index &&
-                          selectedBet &&
-                          selectedBet.type === 'over_under' &&
-                          selectedBet.num_points > 0
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-white dark:bg-gray-700 dark:text-gray-200'
-                        }`}
-                        onClick={() => {
-                          if (new Date() >= game.kickoff) {
-                            alert('Game has already started');
-                            //return;
-                          }
-                          const index_of_bet = sampleBets.findIndex(
-                            (bet) => bet === selectedBet
-                          );
-                          handleGameSelection(index_of_bet, game, 1);
-                        }}
-                      >
-                        Over ({game.over_under})
-                      </button>
-                      <button
-                        className={`p-2 border rounded ${
-                          selectedGame === index &&
-                          selectedBet &&
-                          selectedBet.type === 'over_under' &&
-                          selectedBet.num_points < 0
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-white dark:bg-gray-700 dark:text-gray-200'
-                        }`}
-                        onClick={() => {
-                          if (new Date() >= game.kickoff) {
-                            alert('Game has already started');
-                            //return;
-                          }
-                          const index_of_bet = sampleBets.findIndex(
-                            (bet) => bet === selectedBet
-                          );
-                          handleGameSelection(index_of_bet, game, 0);
-                        }}
-                      >
-                        Under ({game.over_under})
-                      </button>
-                    </div>
-                  )}
-                  {selectedBet.type === 'moneyline' && (
-                    <div className="flex gap-4 mt-2">
-                      <button
-                        className={`p-2 border rounded ${
-                          selectedGame === index &&
-                          selectedBet &&
-                          selectedBet.type === 'moneyline' &&
-                          selectedBet.num_points > 0
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-white dark:bg-gray-700 dark:text-gray-200'
-                        }`}
-                        onClick={() => {
-                          if (new Date() >= game.kickoff) {
-                            alert('Game has already started');
-                            //return;
-                          }
-                          const index_of_bet = sampleBets.findIndex(
-                            (bet) => bet === selectedBet
-                          );
-                          handleGameSelection(index_of_bet, game, 1);
-                        }}
-                      >
-                        {game.home_team} Moneyline {game.moneyline}
-                      </button>
-                      <button
-                        className={`p-2 border rounded ${
-                          selectedGame === index &&
-                          selectedBet &&
-                          selectedBet.type === 'moneyline' &&
-                          selectedBet.num_points < 0
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-white dark:bg-gray-700 dark:text-gray-200'
-                        }`}
-                        onClick={() => {
-                          if (new Date() >= game.kickoff) {
-                            alert('Game has already started');
-                            //return;
-                          }
-                          const index_of_bet = sampleBets.findIndex(
-                            (bet) => bet === selectedBet
-                          );
-                          handleGameSelection(index_of_bet, game, 0);
-                        }}
-                      >
-                        {game.away_team} Moneyline
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       )}
     </div>
@@ -1265,6 +1444,7 @@ type SummaryOfSelectionsProps = {
   games: FetchedGame[];
   choices: InsertionChoice[];
   sampleBets: Bet[];
+  closeModal: () => void;
 };
 
 const SummaryOfSelectionsComponent: React.FC<SummaryOfSelectionsProps> = ({
@@ -1272,38 +1452,58 @@ const SummaryOfSelectionsComponent: React.FC<SummaryOfSelectionsProps> = ({
   games,
   choices,
   sampleBets,
+  closeModal,
 }) => {
+  //make this more of a pop - up modal
+
   return (
-    <div className="w-full max-w-lg mt-4">
-      <h2 className="text-lg mb-2">Summary of Selections</h2>
-      <ul className="space-y-2">
-        {Object.values(allocatedBets).map(
-          (allocatedBet, index) =>
-            allocatedBet && (
-              <li
-                key={index}
-                className="p-2 border rounded bg-white dark:bg-gray-700 dark:text-gray-200"
-              >
-                <span>
-                  Bet:{' '}
-                  <GameDisplay
-                    game={games[allocatedBet.gameIndex]}
-                    bet={allocatedBet.bet}
-                    pick={
-                      choices.find(
-                        (choice) =>
-                          choice.bet_id ===
-                          sampleBets.findIndex(
-                            (bet) => bet === allocatedBet.bet
-                          )
-                      ) || { bet_id: -1, game_id: '', pick: false }
-                    }
-                  />
-                </span>
-              </li>
-            )
-        )}
-      </ul>
+    <div
+      className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 overflow-y-auto"
+      onClick={() => {
+        closeModal();
+      }}
+    >
+      <div
+        className="relative w-4/5  mt-10 p-4 rounded bg-white overflow-y-auto
+        max-h-full
+        "
+        onClick={(e) => e.stopPropagation()}
+      >
+        <FaTimes
+          className="absolute top-2 right-2 cursor-pointer text-blue-700"
+          onClick={closeModal}
+          size={30}
+        />
+        <h2 className="text-lg mb-2 text-black">Summary of Selections</h2>
+        <ul className="w-full space-y-2 flex flex-row flex-wrap">
+          {Object.values(allocatedBets).map(
+            (allocatedBet, index) =>
+              allocatedBet && (
+                <li
+                  key={index}
+                  className="w-1/2 p-2 border rounded bg-white dark:bg-gray-700 dark:text-gray-200"
+                >
+                  <span>
+                    Bet:{' '}
+                    <GameDisplay
+                      game={games[allocatedBet.gameIndex]}
+                      bet={allocatedBet.bet}
+                      pick={
+                        choices.find(
+                          (choice) =>
+                            choice.bet_id ===
+                            sampleBets.findIndex(
+                              (bet) => bet === allocatedBet.bet
+                            )
+                        ) || { bet_id: -1, game_id: '', pick: false }
+                      }
+                    />
+                  </span>
+                </li>
+              )
+          )}
+        </ul>
+      </div>
     </div>
   );
 };
@@ -1344,12 +1544,17 @@ const GameDisplay: React.FC<GameDisplayProps> = ({ game, bet, pick }) => {
 
     if (bet.type === 'spread') {
       return [
-        game.home_team_score - game.away_team_score > game.spread
-          ? 'correct'
-          : 'incorrect',
-        game.away_team_score - game.home_team_score > game.spread
-          ? 'correct'
-          : 'incorrect',
+        pick.pick
+          ? game.home_team_score - game.away_team_score > game.spread
+            ? 'correct'
+            : 'incorrect'
+          : 'nothing',
+
+        !pick.pick
+          ? game.away_team_score - game.home_team_score > game.spread
+            ? 'correct'
+            : 'incorrect'
+          : 'nothing',
       ];
     }
 
@@ -1479,7 +1684,7 @@ const GameDisplay: React.FC<GameDisplayProps> = ({ game, bet, pick }) => {
             </button>
             <button
               className={`p-2 border rounded ${
-                pick.pick
+                !pick.pick
                   ? 'bg-blue-500 text-white'
                   : 'bg-white dark:bg-gray-700 dark:text-gray-200'
               }`}
