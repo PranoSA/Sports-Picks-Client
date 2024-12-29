@@ -834,60 +834,137 @@ const Page: React.FC<{
       <div className="w-full max-w-lg mb-4">
         <h2 className="text-lg mb-2">Available Bets</h2>
         <ul className="space-y-2">
-          {sampleBets.map((bet, index) => (
-            <li
-              key={index}
-              className={`p-2 border rounded cursor-pointer ${
-                selectedBet === bet
-                  ? 'bg-blue-500 text-white'
-                  : `${getStatusColor(bet_statuses[index])}`
-              } ${
-                Object.values(allocatedBets).some(
+          {sampleBets.map((bet, index) => {
+            //find the result of the game corresponding to the bet
+
+            //get the corresponding allocated bet
+            //noo !! ITS NOT THE INDEX!!!
+            const allocatedBet = Object.values(allocatedBets).find(
+              (allocatedBet) => allocatedBet.bet === bet
+            );
+
+            //get the game index
+            const gameIndex = allocatedBet?.gameIndex;
+
+            let has_started = false;
+            let has_finished = false;
+            let is_correct = false;
+
+            if (gameIndex && gameIndex !== -1) {
+              //get the game corresponding to the gameIndex
+              const game = games[gameIndex];
+
+              //check if the game has started
+              has_started = gameHasStarted(game);
+
+              //check if the game has finished
+              has_finished = game.finished;
+
+              //check if the choice is correct
+              const choice = choices.find((choice) => choice.bet_id === index);
+
+              //if the choice exists
+              if (choice) {
+                if (bet.type === 'spread') {
+                  const spread = game.spread;
+                  if (choice.pick) {
+                    is_correct =
+                      game.home_team_score - game.away_team_score > spread;
+                  } else {
+                    is_correct =
+                      game.away_team_score - game.home_team_score > spread;
+                  }
+                } else if (bet.type === 'over_under') {
+                  const over_under = game.over_under;
+                  if (choice.pick) {
+                    is_correct =
+                      game.home_team_score + game.away_team_score > over_under;
+                  } else {
+                    is_correct =
+                      game.home_team_score + game.away_team_score < over_under;
+                  }
+                } else {
+                  if (choice.pick) {
+                    is_correct = game.home_team_score > game.away_team_score;
+                  } else {
+                    is_correct = game.away_team_score > game.home_team_score;
+                  }
+                }
+              }
+            }
+            /*
+                          className={`p-2 border rounded cursor-pointer ${
+                  selectedBet === bet
+                    ? 'bg-blue-500 text-white'
+                    : `${getStatusColor(bet_statuses[index])}`
+                } ${
+                  Object.values(allocatedBets).some(
+                    (allocatedBet) =>
+                      allocatedBet?.bet === bet && allocatedBet.gameIndex !== -1
+                  )
+                    ? 'opacity-50'
+                    : ''
+                }`}
+                */
+
+            //if not started - make it clear and clickable
+            //if started - make it red and not clickable
+            //if finished - make it green or red based on the result
+
+            return (
+              <li
+                key={index}
+                className={`p-2 border rounded cursor-pointer 
+                ${
+                  bet_statuses[index] === 'in-progress'
+                    ? 'bg-yellow-500 text-black'
+                    : bet_statuses[index] === 'success'
+                    ? 'bg-green-500 text-white'
+                    : bet_statuses[index] === 'fail'
+                    ? 'bg-red-500 text-white'
+                    : 'bg-white dark:bg-gray-700 dark:text-gray-200'
+                }
+                  `}
+                onClick={() => {
+                  //if the status is not "hasnt-started" -> don't allow the user to select the bet
+
+                  //log the game corresponding to the bet
+
+                  const choice = choices.find(
+                    (choice) => choice.bet_id === index
+                  );
+
+                  const game = games.find(
+                    (game) => game.game_id === choice?.game_id
+                  );
+
+                  console.log('Bet status', bet_statuses);
+
+                  //print corresponding game
+                  console.log('Game corresponding to bet', game);
+
+                  //print nicely formatted time in local time
+                  console.log('Kickoff time', game?.kickoff.toLocaleString());
+
+                  if (bet_statuses[index] !== 'hasnt-started') {
+                    return;
+                  }
+
+                  handleBetSelection(bet);
+                }}
+              >
+                {bet.type === 'spread'
+                  ? `Spread: ${bet.num_points}`
+                  : bet.type === 'over_under'
+                  ? `Over/Under: ${bet.num_points}`
+                  : `Moneyline : ${bet.num_points}`}
+                {Object.values(allocatedBets).some(
                   (allocatedBet) =>
                     allocatedBet?.bet === bet && allocatedBet.gameIndex !== -1
-                )
-                  ? 'opacity-50'
-                  : ''
-              }`}
-              onClick={() => {
-                //if the status is not "hasnt-started" -> don't allow the user to select the bet
-
-                //log the game corresponding to the bet
-
-                const choice = choices.find(
-                  (choice) => choice.bet_id === index
-                );
-
-                const game = games.find(
-                  (game) => game.game_id === choice?.game_id
-                );
-
-                console.log('Bet status', bet_statuses);
-
-                //print corresponding game
-                console.log('Game corresponding to bet', game);
-
-                //print nicely formatted time in local time
-                console.log('Kickoff time', game?.kickoff.toLocaleString());
-
-                if (bet_statuses[index] !== 'hasnt-started') {
-                  return;
-                }
-
-                handleBetSelection(bet);
-              }}
-            >
-              {bet.type === 'spread'
-                ? `Spread: ${bet.num_points}`
-                : bet.type === 'over_under'
-                ? `Over/Under: ${bet.num_points}`
-                : `Moneyline : ${bet.num_points}`}
-              {Object.values(allocatedBets).some(
-                (allocatedBet) =>
-                  allocatedBet?.bet === bet && allocatedBet.gameIndex !== -1
-              ) && <span className="ml-2 text-green-500">✔</span>}
-            </li>
-          ))}
+                ) && <span className="ml-2 text-green-500">✔</span>}
+              </li>
+            );
+          })}
         </ul>
       </div>
       {selectedBet && (
