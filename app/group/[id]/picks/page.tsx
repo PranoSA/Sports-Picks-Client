@@ -850,12 +850,43 @@ const Page: React.FC<{
             let has_finished = false;
             let is_correct = false;
 
-            if (gameIndex && gameIndex !== -1) {
+            let has_made_pick = false;
+
+            const TimeLeftToChange: TimeLeft = {
+              days: 0,
+              hours: 0,
+              minutes: 0,
+              seconds: 0,
+            };
+
+            if (gameIndex !== -1 && typeof gameIndex !== 'undefined') {
               //get the game corresponding to the gameIndex
               const game = games[gameIndex];
 
+              has_made_pick = true;
+
               //check if the game has started
               has_started = gameHasStarted(game);
+
+              if (!has_started) {
+                //fill out the time left
+                const timeLeft = game.kickoff.getTime() - timer.getTime();
+
+                TimeLeftToChange.days = Math.floor(
+                  timeLeft / (1000 * 60 * 60 * 24)
+                );
+                TimeLeftToChange.hours = Math.floor(
+                  (timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+                );
+
+                TimeLeftToChange.minutes = Math.floor(
+                  (timeLeft % (1000 * 60 * 60)) / (1000 * 60)
+                );
+
+                TimeLeftToChange.seconds = Math.floor(
+                  (timeLeft % (1000 * 60)) / 1000
+                );
+              }
 
               //check if the game has finished
               has_finished = game.finished;
@@ -962,6 +993,16 @@ const Page: React.FC<{
                   (allocatedBet) =>
                     allocatedBet?.bet === bet && allocatedBet.gameIndex !== -1
                 ) && <span className="ml-2 text-green-500">✔</span>}
+
+                {/* Information on time left if the bet has no started */}
+                <div className="text-sm">
+                  {bet_statuses[index] === 'hasnt-started' && has_made_pick && (
+                    <span>
+                      {TimeLeftToChange.days}d {TimeLeftToChange.hours}h{' '}
+                      {TimeLeftToChange.minutes}m {TimeLeftToChange.seconds}s
+                    </span>
+                  )}
+                </div>
               </li>
             );
           })}
