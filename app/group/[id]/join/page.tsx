@@ -57,7 +57,7 @@ const JoinPage: React.FC<{
   useEffect(() => {
     //set local storage bearer token
     if (typeof window !== 'undefined' && session) {
-      localStorage.setItem('accessToken', session.data?.accessToken as string);
+      localStorage.setItem('accessToken', session.accessToken as string);
       //set date_redeemed -> store unix timestamp
       const now_time = Date.now();
       const unix_time = Math.floor(now_time / 1000);
@@ -87,7 +87,7 @@ const JoinPage: React.FC<{
     //redirect to the group page
   };
 
-  if (session.status === 'loading') {
+  if (status === 'loading') {
     return <div>Loading...</div>;
   }
 
