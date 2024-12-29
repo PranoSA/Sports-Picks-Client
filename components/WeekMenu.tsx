@@ -1,4 +1,9 @@
-import { FetchedGroup, FetchedWeek } from '@/types/bets_and_odds';
+import {
+  FetchedGroup,
+  FetchedWeek,
+  FetchedChoice,
+  Bet,
+} from '@/types/bets_and_odds';
 import { useGetWeeks } from '../queries/weeks';
 
 import Link from 'next/link';
@@ -8,11 +13,20 @@ type WeekMenuProps = {
 };
 
 import { useGetWeeksForCurrentYear } from '@/queries/weeks';
-import { FaCheckCircle, FaClipboardList, FaClock } from 'react-icons/fa';
+import {
+  FaCheckCircle,
+  FaClipboardList,
+  FaClock,
+  FaTimes,
+} from 'react-icons/fa';
 import { use, useMemo, useState, useEffect } from 'react';
 
 //get games by week
 import { useGetGamesByWeek } from '@/queries/games';
+import { useGetGroupById } from '@/queries/groups';
+
+//get bets placed by user
+import { useGetPicks } from '@/queries/picks';
 
 /**
  *
@@ -35,6 +49,19 @@ import { useGetGamesByWeek } from '@/queries/games';
 const WeekMenu: React.FC<WeekMenuProps> = ({ group }) => {
   const { data: weeks, isLoading, isError } = useGetWeeksForCurrentYear();
 
+  //query information about group
+  const {
+    data: group_data,
+    isLoading: group_loading,
+    isError: group_error,
+  } = useGetGroupById(group.group_id);
+
+  const {
+    data: picks,
+    isLoading: picks_loading,
+    isError: picks_error,
+  } = useGetPicks(group.group_id);
+
   const [current_time, set_current_time] = useState(new Date());
 
   type WeekStartsIn = {
@@ -43,6 +70,36 @@ const WeekMenu: React.FC<WeekMenuProps> = ({ group }) => {
     minutes: number;
     seconds: number;
   };
+
+  const presentWeek = useMemo(() => {
+    if (!weeks) {
+      return;
+    }
+    return weeks.find((week) => {
+      return (
+        new Date(week.start_date) <= current_time &&
+        new Date(week.end_date) >= current_time
+      );
+    });
+  }, [current_time, weeks]);
+
+  const future_weeks = useMemo(() => {
+    if (!weeks) {
+      return;
+    }
+    return weeks.filter((week) => {
+      return new Date(week.start_date) > current_time;
+    });
+  }, [current_time, weeks]);
+
+  const past_weeks = useMemo(() => {
+    if (!weeks) {
+      return;
+    }
+    return weeks.filter((week) => {
+      return new Date(week.end_date) < current_time;
+    });
+  }, [current_time, weeks]);
 
   useEffect(() => {
     //tick every  second
@@ -73,6 +130,19 @@ const WeekMenu: React.FC<WeekMenuProps> = ({ group }) => {
     });
   }, [current_time, weeks]);
 
+  const current_week_ends_in = useMemo(() => {
+    if (!presentWeek) {
+      return;
+    }
+    const end_date = new Date(presentWeek.end_date);
+    const diff = end_date.getTime() - current_time.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    return { days, hours, minutes, seconds };
+  }, [current_time, presentWeek]);
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -88,68 +158,139 @@ const WeekMenu: React.FC<WeekMenuProps> = ({ group }) => {
 
   return (
     <div className="space-y-4 text-black font-black">
-      {weeks.map((week, index) => {
-        const isPast = new Date(week.end_date) < now;
-        const isCurrent =
-          new Date(week.start_date) <= now && new Date(week.end_date) >= now;
-        const isFuture = new Date(week.start_date) > now;
+      {/* Title : Present Week */}
+      <h1 className="text-2xl font-bold dark:text-white text-white">
+        Current Week
+      </h1>
 
-        let bgColor = 'bg-gray-200';
-        let buttonText = 'Results';
-        let buttonIcon = <FaClipboardList />;
-        let buttonLink = `/group/${group.group_id}/${week.week_id}/results`;
+      {/* Start with display for current week */}
 
-        if (isCurrent) {
-          bgColor = 'bg-yellow-200';
-          buttonText = 'Make Picks';
-          buttonIcon = <FaCheckCircle />;
-          buttonLink = `/group/${group.group_id}/picks`;
-        } else if (isFuture) {
-          bgColor = 'bg-blue-200';
-          buttonText = 'Upcoming';
-          buttonIcon = <FaClock />;
-          buttonLink = '#';
-        }
+      {presentWeek && (
+        <div className="p-4 border rounded bg-yellow-200 shadow-md">
+          <h1 className="text-xl font-bold">{presentWeek.week_name}</h1>
+          <h2 className="text-md mb-2">
+            {new Date(presentWeek.start_date).toDateString()} -{' '}
+            {new Date(presentWeek.end_date).toDateString()}
+          </h2>
+          <div className="flex gap-4 bg-yellow-200">
+            <Link href={`/group/${group.group_id}/picks`}>
+              <FaCheckCircle />
+              <span className="ml-2">Make Picks</span>
+            </Link>
+          </div>
+          {/*Information About when the week ends */}
+          {current_week_ends_in && (
+            <div>
+              <h2 className="text-md mb-2">
+                Week Ends In {current_week_ends_in.days} days,{' '}
+                {current_week_ends_in.hours} hours,{' '}
+                {current_week_ends_in.minutes} minutes,{' '}
+                {current_week_ends_in.seconds} seconds
+              </h2>
+            </div>
+          )}
+          {/* Include information about the number of games that have started, the number of games that are pending */}
+          <WeekMenuComponent week={presentWeek} />
+          <SummaryOfSelectionsPanel group={group} picks={picks || []} />
+        </div>
+      )}
 
-        return (
-          <div
-            key={week.week_id}
-            className={`p-4 border rounded ${bgColor} shadow-md`}
-          >
-            <h1 className="text-xl font-bold">{week.week_name}</h1>
-            <h2 className="text-md mb-2">
-              {new Date(week.start_date).toDateString()} -{' '}
-              {new Date(week.end_date).toDateString()}
-            </h2>
-            <div className="flex gap-4">
-              <Link href={buttonLink}>
-                {buttonIcon}
-                <span className="ml-2">{buttonText}</span>
-              </Link>
-              {isPast && (
+      <h1 className="text-2xl font-bold dark:text-white text-white">
+        Future Weeks
+      </h1>
+
+      {/* Display for future weeks */}
+      {future_weeks &&
+        future_weeks.map((week, index) => {
+          const days_to_start = Math.floor(
+            (new Date(week.start_date).getTime() - now.getTime()) /
+              (1000 * 60 * 60 * 24)
+          );
+
+          const hours_to_start =
+            Math.floor(
+              (new Date(week.start_date).getTime() - now.getTime()) /
+                (1000 * 60 * 60)
+            ) -
+            days_to_start * 24;
+
+          const minutes_to_start =
+            Math.floor(
+              (new Date(week.start_date).getTime() - now.getTime()) /
+                (1000 * 60)
+            ) -
+            days_to_start * 24 * 60 -
+            hours_to_start * 60;
+
+          const seconds_to_start =
+            Math.floor(
+              (new Date(week.start_date).getTime() - now.getTime()) / 1000
+            ) -
+            days_to_start * 24 * 60 * 60 -
+            hours_to_start * 60 * 60 -
+            minutes_to_start * 60;
+
+          const week_starts_in: WeekStartsIn = {
+            days: days_to_start,
+            hours: hours_to_start,
+            minutes: minutes_to_start,
+            seconds: seconds_to_start,
+          };
+
+          return (
+            <div
+              key={week.week_id}
+              className="p-4 border rounded bg-blue-200 shadow-md"
+            >
+              <h1 className="text-xl font-bold">{week.week_name}</h1>
+              <h2 className="text-md mb-2">
+                {new Date(week.start_date).toDateString()} -{' '}
+                {new Date(week.end_date).toDateString()}
+              </h2>
+              <div className="flex gap-4">
+                <div>
+                  <FaClock />
+                  <span className="ml-2">
+                    Make Picks In {week_starts_in.days} days,{' '}
+                    {week_starts_in.hours} hours, {week_starts_in.minutes}{' '}
+                    minutes, {week_starts_in.seconds} seconds
+                  </span>
+                </div>
+              </div>
+              {/* Include information about the number of games that have started, the number of games that are pending */}
+              <WeekMenuComponent week={week} />
+            </div>
+          );
+        })}
+
+      <h1 className="text-2xl font-bold dark:text-white text-white">
+        Past Weeks
+      </h1>
+
+      {/* Display for past weeks */}
+      {past_weeks &&
+        past_weeks.map((week) => {
+          return (
+            <div
+              key={week.week_id}
+              className="p-4 border rounded bg-gray-200 shadow-md"
+            >
+              <h1 className="text-xl font-bold">{week.week_name}</h1>
+              <h2 className="text-md mb-2">
+                {new Date(week.start_date).toDateString()} -{' '}
+                {new Date(week.end_date).toDateString()}
+              </h2>
+              <div className="flex gap-4">
                 <Link href={`/group/${group.group_id}/${week.week_id}/results`}>
                   <FaClipboardList />
                   <span className="ml-2">Results</span>
                 </Link>
-              )}
-
-              {/* If in future, show an clock with days, hours, minutes, seconds */}
-              {isFuture && week_starts_in && (
-                <div>
-                  <FaClock />
-                  <span className="ml-2">
-                    Make Picks In {week_starts_in[index].days} days,{' '}
-                    {week_starts_in[index].hours} hours,{' '}
-                    {week_starts_in[index].minutes} minutes,{' '}
-                    {week_starts_in[index].seconds} seconds
-                  </span>
-                </div>
-              )}
+              </div>
+              {/* Include information about the number of games that have started, the number of games that are pending */}
               <WeekMenuComponent week={week} />
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
     </div>
   );
 };
@@ -202,4 +343,60 @@ const WeekMenuComponent: React.FC<{ week: FetchedWeek }> = ({ week }) => {
     </div>
   );
 };
+
+/**
+ *
+ * Summary of selections will show the bets assigned for the group
+ * -> And the picks the user has made
+ *
+ * If the pick is mad -> Display a checkmark
+ * If the pick is not made -> Display a warning
+ */
+
+type SummaryOfSelectionsPanelProps = {
+  group: FetchedGroup;
+  picks: FetchedChoice[];
+};
+
+const SummaryOfSelectionsPanel: React.FC<SummaryOfSelectionsPanelProps> = ({
+  group,
+  picks,
+}) => {
+  //the list of bets and choices
+  //the list of picks made by the user
+
+  const bets = group.bets;
+
+  type BetWithStatus = Bet & {
+    completed_bet: boolean;
+  };
+
+  const bets_with_status: BetWithStatus[] = bets.map((bet) => {
+    return { ...bet, completed_bet: false };
+  });
+
+  picks.forEach((pick) => {
+    //find the choice
+    const choice = pick.bet_id;
+
+    bets_with_status[choice].completed_bet = true;
+  });
+
+  return (
+    <div>
+      <h1>Summary of Selections</h1>
+      {bets_with_status.map((bet) => {
+        return (
+          <div key={bet.type + bet.num_points}>
+            <span>
+              {bet.type} - {bet.num_points}
+            </span>
+            {bet.completed_bet ? <FaCheckCircle /> : <FaTimes />}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 export default WeekMenu;

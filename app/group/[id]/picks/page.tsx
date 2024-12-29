@@ -763,7 +763,38 @@ const Page: React.FC<{
   return (
     <div className="p-4 flex flex-col items-center bg-gray-500">
       {/* Options Between showing selections vs choosing bets */}
-      <div className="w-full max-w-lg mb-4"></div>
+      <div className="w-full max-w-lg mb-4">
+        {viewSelections ? (
+          <>
+            <SummaryOfSelectionsComponent
+              choices={choices}
+              games={games}
+              sampleBets={sampleBets}
+              allocatedBets={allocatedBets}
+            />
+            {/* Button to go back to selecting bets */}
+            <button
+              className="p-8 border rounded bg-blue-500 text-white"
+              onClick={() => {
+                setViewSelections(false);
+              }}
+            >
+              Go Back
+            </button>
+          </>
+        ) : (
+          ///buttons to show selections
+          <button
+            className="p-8 border rounded bg-blue-500 text-white"
+            onClick={() => {
+              setViewSelections(true);
+            }}
+          >
+            Show Selections
+          </button>
+        )}
+      </div>
+
       <div className="w-full max-w-lg mb-4">
         {/* Submit your choices */}
         <button
