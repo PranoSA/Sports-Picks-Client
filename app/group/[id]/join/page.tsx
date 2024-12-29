@@ -44,7 +44,7 @@ const JoinPage: React.FC<{
 }> = ({ id }) => {
   const { data: group, isLoading } = useGetGroupById(id);
 
-  const session = useSession();
+  const { data: session, status } = useSession();
 
   const joinGroup = useJoinGroup();
 
