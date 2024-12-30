@@ -35,6 +35,9 @@ import {
   //timing glass icon
   FaHourglassHalf,
   FaSpinner,
+  FaPencilAlt,
+  FaTrashAlt,
+  FaExclamationTriangle,
 } from 'react-icons/fa';
 
 import { use, useEffect, useMemo, useState, useCallback, useRef } from 'react';
@@ -802,6 +805,31 @@ const Page: React.FC<{
   }, [handleSubmission, submittable]);
 */
 
+  const total = useMemo(() => {
+    const total_points = sampleBets.reduce((acc, bet) => {
+      return acc + bet.num_points;
+    }, 0);
+    return total_points;
+  }, [group]);
+
+  const progressPercentage = useMemo(() => {
+    return (pendingPoints / total) * 100;
+  }, [pendingPoints, total]);
+
+  const missedPointsPercentage = useMemo(() => {
+    return (missedPoints / total) * 100;
+  }, [missedPoints, total]);
+
+  const scoresPercentage = useMemo(() => {
+    return (pointsScored / total) * 100;
+  }, [pointsScored, missedPoints, total]);
+
+  const unpickedPercentage = useMemo(() => {
+    return (
+      ((total - pointsScored - missedPoints - pendingPoints) / total) * 100
+    );
+  }, [pointsScored, missedPoints, pendingPoints, total]);
+
   //submitable is nonsense -> just submit the picks when they change
   useEffect(() => {
     //handleSubmission();
@@ -874,7 +902,7 @@ const Page: React.FC<{
       <div className="w-full max-w-lg mb-4">
         {/* Clear your choices */}
         <button
-          className="p-8 border rounded bg-red-500 text-white"
+          className="p-2 border rounded bg-red-500 text-white"
           onClick={() => {
             clearChoices();
             //handleSubmission();
@@ -883,23 +911,41 @@ const Page: React.FC<{
           Clear Choices
         </button>
       </div>
-      <div className="w-full max-w-lg mb-4">
-        <h2 className="text-lg mb-2">Points</h2>
-        <div className="flex flex-col items-center">
-          <span className="text-lg font-semibold">
-            Points Scored: {pointsScored}
-          </span>
-          <span className="text-lg font-semibold">
-            Pending Points: {pendingPoints}
-          </span>
-          <span className="text-lg font-semibold">
-            Missed Points: {missedPoints}
-          </span>
+      <div className="w-full w-full mb-4 flex flex-row">
+        <div className="w-1/2">
+          <h2 className="text-lg mb-2">Points</h2>
+          <div className="flex flex-col items-center">
+            <span className="text-lg font-semibold">
+              Points Scored: {pointsScored}
+            </span>
+            <span className="text-lg font-semibold">
+              Pending Points: {pendingPoints}
+            </span>
+            <span className="text-lg font-semibold">
+              Missed Points: {missedPoints}
+            </span>
+          </div>
+        </div>
+        {/* Show a Progress Bar*/}
+        <div className="w-1/2 border-r-2 border-black border-4">
+          {/* Red FOr Points Missed, Purple for Progress, CLear for nothing, and Green for scores*/}
+          <div
+            className="h-full bg-red-500"
+            style={{ width: `${missedPointsPercentage}%` }}
+          ></div>
+          <div
+            className="h-full bg-purple-500"
+            style={{ width: `${progressPercentage}%` }}
+          ></div>
+          <div
+            className="h-full bg-green-500"
+            style={{ width: `${scoresPercentage}%` }}
+          ></div>
         </div>
       </div>
-      <div className="w-full max-w-lg mb-4">
-        <h2 className="text-lg mb-2">Available Bets</h2>
-        <ul className="space-y-2">
+      <div className="w-full mb-4 flex flex-wrap flex-row ">
+        <h2 className="text-lg mb-2 w-full">Available Bets</h2>
+        <ul className="space-y-2 w-full flex flex-wrap">
           {sampleBets.map((bet, index) => {
             //find the result of the game corresponding to the bet
 
@@ -1066,10 +1112,13 @@ const Page: React.FC<{
                   ${0 - (game_for_bet?.moneyline ?? 0)})`
                 : '';
 
+            const empty_bet: boolean = !choice_for_bet || !game_for_bet;
+
             return (
               <li
                 key={index}
-                className={`p-2 border rounded cursor-pointer 
+                className={`p-4 border rounded cursor-pointer w-1/2  
+                  flex flex-row justify-between flex-wrap
                 ${
                   bet_statuses[index] === 'in-progress'
                     ? 'bg-yellow-200 text-black'
@@ -1077,58 +1126,63 @@ const Page: React.FC<{
                     ? 'bg-green-500 text-white'
                     : bet_statuses[index] === 'fail'
                     ? 'bg-red-200 text-white'
-                    : 'bg-white dark:bg-gray-700 dark:text-gray-200'
+                    : 'bg-white dark:bg-gray-500 dark:text-gray-200'
                 }
                   `}
-                onClick={() => {
-                  //if the status is not "hasnt-started" -> don't allow the user to select the bet
-
-                  //log the game corresponding to the bet
-
-                  const choice = choices.find(
-                    (choice) => choice.bet_id === index
-                  );
-
-                  const game = games.find(
-                    (game) => game.game_id === choice?.game_id
-                  );
-
-                  if (bet_statuses[index] !== 'hasnt-started') {
-                    return;
-                  }
-
-                  handleBetSelection(bet);
-                }}
               >
-                {bet.type === 'spread'
-                  ? `Spread: ${bet.num_points}`
-                  : bet.type === 'over_under'
-                  ? `Over/Under: ${bet.num_points}`
-                  : `Moneyline : ${bet.num_points}`}
-                {is_correct && has_finished && (
-                  <span className="ml-2 text-green-500">
-                    <FaCheck className="text-green-500" size={20} />
-                  </span>
-                )}
-                {
-                  !is_correct && has_finished && (
-                    <span className="ml-2 text-red-500">
-                      <FaTimes className="text-red-500" size={20} />
+                <div className="w-full flex flex-row justify-between">
+                  {bet.type === 'spread'
+                    ? `Spread: ${bet.num_points}`
+                    : bet.type === 'over_under'
+                    ? `Over/Under: ${bet.num_points}`
+                    : `Moneyline : ${bet.num_points}`}
+                  {is_correct && has_finished && (
+                    <span className="ml-2 text-green-500">
+                      <FaCheck className="text-green-500" size={20} />
                     </span>
-                  ) //if the choice is wrong and the game has finished
-                }
-                {
-                  //pending
-                  has_started && !has_finished && (
-                    <span className="ml-2 text-yellow-500">
-                      ⌛
-                      <FaSpinner className="animate-spin" size={20} />
-                    </span>
-                  )
-                }
+                  )}
+                  {/* If has started -> show a lock */}
+                  {has_started && (
+                    <FaLock className="ml-2 text-red-500" size={20} />
+                  )}
+                  {/* IF Has not started -> show a unlock */}
+                  {!has_started && !empty_bet && (
+                    <FaLockOpen className="ml-2 text-green-500" size={20} />
+                  )}
+                  {
+                    //empty bet -> Show something to draw attention from the user to make a choice
+                    empty_bet && (
+                      <span className="ml-2 text-red-500 bg-red-200">
+                        <FaExclamationTriangle
+                          className="text-red-500"
+                          size={20}
+                        />{' '}
+                        NO BET !
+                      </span>
+                    )
+                  }
+                  {
+                    !is_correct && has_finished && (
+                      <span className="ml-2 text-red-500">
+                        <FaTimes className="text-red-500" size={20} />
+                      </span>
+                    ) //if the choice is wrong and the game has finished
+                  }
+                  {
+                    //pending
+                    has_started && !has_finished && (
+                      <div className="ml-2 text-yellow-500 flex flex-row">
+                        ⌛
+                        <FaSpinner className="animate-spin" size={20} />
+                      </div>
+                    )
+                  }
+                </div>
+
+                {/* Div for time information */}
 
                 {/* Information on time left if the bet has no started */}
-                <div className="text-sm">
+                <div className="text-sm w-full">
                   {bet_statuses[index] === 'hasnt-started' && has_made_pick && (
                     <span>
                       {TimeLeftToChange.days}d {TimeLeftToChange.hours}h{' '}
@@ -1136,25 +1190,87 @@ const Page: React.FC<{
                     </span>
                   )}
                 </div>
+                {/* Div for the game information */}
+                <div className="w-full justify-around flex flex-row">
+                  {
+                    game_for_bet && (
+                      <span className="ml-2 text-lg text-black">
+                        {game_for_bet.home_team}
+                        {home_team_string} @ {game_for_bet.away_team}{' '}
+                        {away_team_string}
+                      </span>
+                    ) //if the game has finished
+                  }
+                </div>
 
-                {/* If has started -> show a lock */}
-                {has_started && (
-                  <FaLock className="ml-2 text-red-500" size={20} />
-                )}
-                {/* IF Has not started -> show a unlock */}
-                {!has_started && (
-                  <FaLockOpen className="ml-2 text-green-500" size={20} />
-                )}
+                {/* Div for Editing the bet */}
+                <div className="w-full flex flex-row justify-around mt-4">
+                  {/* Icon TO Make a selection */}
+                  {bet_statuses[index] === 'hasnt-started' && (
+                    <button
+                      onClick={() => {
+                        //if the status is not "hasnt-started" -> don't allow the user to select the bet
 
-                {
-                  game_for_bet && (
-                    <span className="ml-2 text-sm text-black">
-                      {game_for_bet.home_team}
-                      {home_team_string} @ {game_for_bet.away_team}{' '}
-                      {away_team_string}
-                    </span>
-                  ) //if the game has finished
-                }
+                        //log the game corresponding to the bet
+
+                        const choice = choices.find(
+                          (choice) => choice.bet_id === index
+                        );
+
+                        const game = games.find(
+                          (game) => game.game_id === choice?.game_id
+                        );
+
+                        if (bet_statuses[index] !== 'hasnt-started') {
+                          alert('Game has already started');
+                          return;
+                        }
+
+                        handleBetSelection(bet);
+                      }}
+                      className="p-2 border rounded cursor-pointer"
+                    >
+                      <FaPencilAlt
+                        className="ml-2 text-blue-500 cursor-pointer"
+                        size={20}
+                      />
+                      {empty_bet ? 'Make Selection' : 'Edit Selection'}
+                    </button>
+                  )}
+
+                  {/* ICon To CLEAR a selection */}
+                  {!empty_bet && bet_statuses[index] === 'hasnt-started' && (
+                    <button
+                      className="p-2 border rounded cursor-pointer"
+                      onClick={() => {
+                        if (bet_statuses[index] !== 'hasnt-started') {
+                          alert('Game has already started');
+                          return;
+                        }
+
+                        //edit choices
+                        const index_of_choice = choices.findIndex(
+                          (choice) => choice.bet_id === index
+                        );
+
+                        if (index_of_choice !== -1) {
+                          setChoices([
+                            ...choices.slice(0, index_of_choice),
+                            ...choices.slice(index_of_choice + 1),
+                          ]);
+                        }
+
+                        //clearChoice(index);
+                      }}
+                    >
+                      <FaTrashAlt
+                        className="ml-2 text-red-500 cursor-pointer"
+                        size={20}
+                      />
+                      Delete Selection
+                    </button>
+                  )}
+                </div>
 
                 {/* If has finished -> show a checkmark */}
               </li>
