@@ -12,6 +12,8 @@ import GroupMemberDropdown from '@/components/GroupMemberDropdown';
 
 import WeekMenu from '@/components/WeekMenu';
 
+import { FaChartBar } from 'react-icons/fa';
+
 //get games by week
 import { useGetGamesByWeek } from '@/queries/games';
 
@@ -50,7 +52,7 @@ const GroupHomePage: React.FC<{
 
   return (
     <div className="p-4 flex flex-col items-center dark:bg-gray-800 bg-gray-800">
-      <div className="w-full max-w-2xl bg-white dark:bg-gray-800 p-6 rounded shadow-md">
+      <div className="w-full max-w-2xl bg-gray-800 p-6 rounded shadow-md">
         <h1 className="text-2xl font-bold mb-4 dark:text-white">
           Group Details
         </h1>
@@ -62,7 +64,10 @@ const GroupHomePage: React.FC<{
         </div>
         {/* View Results */}
         <div className="mb-4 dark:text-white">
-          <Link href={`/group/${id}/scores`}>View Results</Link>
+          <Link href={`/group/${id}/scores`}>
+            <FaChartBar className="mr-2" />
+            View Results
+          </Link>
         </div>
         <div className="mb-4 dark:text-white">
           <GroupMemberDropdown group={group} />

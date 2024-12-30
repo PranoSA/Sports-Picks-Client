@@ -38,6 +38,7 @@ import {
   FaPencilAlt,
   FaTrashAlt,
   FaExclamationTriangle,
+  FaArrowLeft,
 } from 'react-icons/fa';
 
 import { use, useEffect, useMemo, useState, useCallback, useRef } from 'react';
@@ -324,10 +325,10 @@ const Page: React.FC<{
         //moneyline
         if (choice.pick) {
           //home team
-          return game.home_team_score > game.away_team_score;
+          return game.home_team_score < game.away_team_score;
         } else {
           //road team
-          return game.away_team_score > game.home_team_score;
+          return game.away_team_score < game.home_team_score;
         }
       }
     });
@@ -888,18 +889,21 @@ const Page: React.FC<{
           </>
         ) : (
           ///buttons to show selections
-          <button
-            className="p-2 border rounded bg-blue-500 text-white"
-            onClick={() => {
-              setViewSelections(true);
-            }}
-          >
-            Show Selections
-          </button>
+          <></>
         )}
       </div>
 
-      <div className="w-full max-w-lg mb-4">
+      <div className="w-full max-w-lg mb-4 flex flex-row justify-around">
+        {/* Go Back to Group */}
+        <button
+          className="p-2 border rounded bg-blue-500 text-white"
+          onClick={() => {
+            window.location.href = `/group/${id}`;
+          }}
+        >
+          Go Back to Group
+          <FaArrowLeft className="ml-2" />
+        </button>
         {/* Clear your choices */}
         <button
           className="p-2 border rounded bg-red-500 text-white"
@@ -909,6 +913,14 @@ const Page: React.FC<{
           }}
         >
           Clear Choices
+        </button>
+        <button
+          className="p-2 border rounded bg-blue-500 text-white"
+          onClick={() => {
+            setViewSelections(true);
+          }}
+        >
+          Show Selections
         </button>
       </div>
       <div className="w-full w-full mb-4 flex flex-row">
@@ -927,8 +939,7 @@ const Page: React.FC<{
           </div>
         </div>
         {/* Show a Progress Bar*/}
-        <div className="w-1/2 border-r-2 border-black border-4">
-          {/* Red FOr Points Missed, Purple for Progress, CLear for nothing, and Green for scores*/}
+        <div className="w-1/2 h-6 bg-gray-200 rounded-full overflow-hidden flex">
           <div
             className="h-full bg-red-500"
             style={{ width: `${missedPointsPercentage}%` }}
@@ -943,7 +954,7 @@ const Page: React.FC<{
           ></div>
         </div>
       </div>
-      <div className="w-full mb-4 flex flex-wrap flex-row ">
+      <div className="w-full mb-4 flex flex-wrap flex-row text-black ">
         <h2 className="text-lg mb-2 w-full">Available Bets</h2>
         <ul className="space-y-2 w-full flex flex-wrap">
           {sampleBets.map((bet, index) => {
@@ -1118,7 +1129,7 @@ const Page: React.FC<{
               <li
                 key={index}
                 className={`p-4 border rounded cursor-pointer w-1/2  
-                  flex flex-row justify-between flex-wrap
+                  flex flex-row justify-between flex-wrap text-black
                 ${
                   bet_statuses[index] === 'in-progress'
                     ? 'bg-yellow-200 text-black'
@@ -1130,7 +1141,7 @@ const Page: React.FC<{
                 }
                   `}
               >
-                <div className="w-full flex flex-row justify-between">
+                <div className="w-full flex flex-row justify-between text-black">
                   {bet.type === 'spread'
                     ? `Spread: ${bet.num_points}`
                     : bet.type === 'over_under'
@@ -1167,6 +1178,13 @@ const Page: React.FC<{
                         <FaTimes className="text-red-500" size={20} />
                       </span>
                     ) //if the choice is wrong and the game has finished
+                  }
+                  {
+                    is_correct && has_finished && (
+                      <span className="ml-2 text-green-500">
+                        <FaCheck className="text-blue-700" size={20} />
+                      </span>
+                    ) //if the choice is correct and the game has finished
                   }
                   {
                     //pending
