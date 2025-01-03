@@ -14,6 +14,8 @@ type WeekMenuProps = {
 
 import { useGetWeeksForCurrentYear } from '@/queries/weeks';
 import {
+  FaArrowDown,
+  FaArrowUp,
   FaCheckCircle,
   FaClipboardList,
   FaClock,
@@ -48,6 +50,20 @@ import { useGetPicks } from '@/queries/picks';
 
 const WeekMenu: React.FC<WeekMenuProps> = ({ group }) => {
   const { data: weeks, isLoading, isError } = useGetWeeksForCurrentYear();
+  const [showSummaryOfSelectedWeek, setShowSummaryOfSelectedWeek] =
+    useState<boolean>(false);
+
+  const [showWeekPickInformation, setShowWeekPickInformation] = useState<
+    boolean[]
+  >([]);
+
+  //change the showWeekPickInformation to be an array of booleans
+  //following the weeks
+  useEffect(() => {
+    if (weeks) {
+      setShowWeekPickInformation(weeks.map((week) => false));
+    }
+  }, [weeks]);
 
   //query information about group
   const {
@@ -190,8 +206,24 @@ const WeekMenu: React.FC<WeekMenuProps> = ({ group }) => {
             </div>
           )}
           {/* Include information about the number of games that have started, the number of games that are pending */}
-          <WeekMenuComponent week={presentWeek} />
-          <SummaryOfSelectionsPanel group={group} picks={picks || []} />
+          {showWeekPickInformation && <WeekMenuComponent week={presentWeek} />}
+          {showSummaryOfSelectedWeek ? (
+            <div className="mt-4">
+              <button onClick={() => setShowSummaryOfSelectedWeek(false)}>
+                <FaArrowUp className="mr-2" />
+              </button>
+            </div>
+          ) : (
+            <div className="mt-4">
+              <button onClick={() => setShowSummaryOfSelectedWeek(true)}>
+                View Summary of Selections
+                <FaArrowDown className="mr-2" />
+              </button>
+            </div>
+          )}
+          {showSummaryOfSelectedWeek && (
+            <SummaryOfSelectionsPanel group={group} picks={picks || []} />
+          )}
         </div>
       )}
 
@@ -299,6 +331,9 @@ const WeekMenuComponent: React.FC<{ week: FetchedWeek }> = ({ week }) => {
   /* get games for the week */
   const { data: games, isLoading, isError } = useGetGamesByWeek(week.week_id);
 
+  const [showPickInformation, setShowPickInformation] =
+    useState<boolean>(false);
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -332,14 +367,25 @@ const WeekMenuComponent: React.FC<{ week: FetchedWeek }> = ({ week }) => {
   return (
     <div>
       <h1>{week.week_name}</h1>
-      <div>
+      {showPickInformation ? (
+        <button onClick={() => setShowPickInformation(false)}>
+          <FaArrowUp className="mr-2" />
+        </button>
+      ) : (
+        <button onClick={() => setShowPickInformation(true)}>
+          Show Pick Informaition <FaArrowDown className="mr-2" />
+        </button>
+      )}
+      {showPickInformation && (
         <div>
-          <h2>Games Started: {games_started.length}</h2>
-          <h2>Games Pending: {games_pending.length}</h2>
-          <h2>Games Completed: {games_completed.length}</h2>
-          <h2>Total Games: {total_games}</h2>
+          <div>
+            <h2>Games Started: {games_started.length}</h2>
+            <h2>Games Pending: {games_pending.length}</h2>
+            <h2>Games Completed: {games_completed.length}</h2>
+            <h2>Total Games: {total_games}</h2>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
@@ -365,6 +411,9 @@ const SummaryOfSelectionsPanel: React.FC<SummaryOfSelectionsPanelProps> = ({
   //the list of bets and choices
   //the list of picks made by the user
 
+  const [showSummaryOfSelectedWeek, setShowSummaryOfSelectedWeek] =
+    useState<boolean>(false);
+
   const bets = group.bets;
 
   type BetWithStatus = Bet & {
@@ -387,11 +436,17 @@ const SummaryOfSelectionsPanel: React.FC<SummaryOfSelectionsPanelProps> = ({
       <h1>Summary of Selections</h1>
       {bets_with_status.map((bet) => {
         return (
-          <div key={bet.type + bet.num_points}>
+          <div key={bet.type + bet.num_points} className="flex flex-row">
             <span>
               {bet.type} - {bet.num_points}
             </span>
-            {bet.completed_bet ? <FaCheckCircle /> : <FaTimes />}
+            <div className="ml-4">
+              {bet.completed_bet ? (
+                <FaCheckCircle title='"Made Selection' />
+              ) : (
+                <FaTimes title="No Selection Made" />
+              )}
+            </div>
           </div>
         );
       })}

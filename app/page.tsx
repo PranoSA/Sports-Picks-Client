@@ -18,6 +18,7 @@ import Use_is_admin from '@/queries/admin';
 import { useGetGroups } from '@/queries/groups';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useAddWeeks, useGetWeeks, useDeleteWeek } from '@/queries/weeks';
 import queryClient from '@/queries/queryclient';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -34,6 +35,7 @@ import { FaAngleDown, FaAngleUp, FaExternalLinkAlt } from 'react-icons/fa';
 
 //import icons that show leadership role (maybe crown), and then a regular user icon
 import { FaCrown, FaUser } from 'react-icons/fa';
+import { useGetYears } from '@/queries/years';
 
 const HomeWithSessionProvider = () => {
   const sessionProviderProps: SessionProviderProps = {
@@ -185,16 +187,67 @@ const AdminPanel: React.FC = () => {
    *
    */
 
+  const { data: years, isLoading, isError, error } = useGetYears();
+
+  const current_year_id = useMemo(() => {
+    const current_date = new Date();
+    const current_year = years?.find((year) => {
+      return (
+        new Date(year.start_date) <= current_date &&
+        new Date(year.end_date) >= current_date
+      );
+    });
+
+    return current_year?.year_id || '';
+  }, [years]);
+
+  const {
+    data: weeks,
+    isLoading: weeksLoading,
+    isError: weeksError,
+  } = useGetWeeks(current_year_id);
+
+  const current_week_id = useMemo(() => {
+    if (weeks === undefined) {
+      return '';
+    }
+    const current_date = new Date();
+    const current_week = weeks?.find((week) => {
+      return (
+        new Date(week.start_date) <= current_date &&
+        new Date(week.end_date) >= current_date
+      );
+    });
+
+    return current_week?.week_id || '';
+  }, [weeks]);
+
   return (
-    <div className="flex flex-col p-4 dark:bg-black">
-      <Link
-        href="/admin"
-        className="
-        cursor
-        hover:bg-blue-500 hover:text-white p-2 rounded-lg shadow-md bg-blue-400 text-white"
-      >
-        <h1 className="text-2xl font-bold mb-4 dark:text-white">Admin Panel</h1>
-      </Link>
+    <div className="flex flex-col items-center justify-center  p-6 bg-gray-100 dark:bg-gray-900">
+      <div className="w-full max-w-md p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+        <h1 className="text-3xl font-bold mb-6 text-center text-gray-800 dark:text-white">
+          Admin Panel
+        </h1>
+        <Link href="/admin" className="mb-4">
+          <div className="block w-full py-3 px-4 text-center text-white bg-blue-500 hover:bg-blue-600 rounded-lg shadow-md transition duration-300 cursor-pointer">
+            Go to Admin Year
+          </div>
+        </Link>
+        {/* Add Links to Current Year and Current Week */}
+        <Link href={`/admin/year/${current_year_id}`} className="mb-4">
+          <div className="block w-full py-3 px-4 text-center text-white bg-blue-500 hover:bg-blue-600 rounded-lg shadow-md transition duration-300 cursor-pointer">
+            Go to Current Year
+          </div>
+        </Link>
+        <Link
+          href={`/admin/year/${current_year_id}/week/${current_week_id}`}
+          className="mb-4"
+        >
+          <div className="block w-full py-3 px-4 text-center text-white bg-blue-500 hover:bg-blue-600 rounded-lg shadow-md transition duration-300 cursor-pointer">
+            Go to Current Week
+          </div>
+        </Link>
+      </div>
     </div>
   );
 };

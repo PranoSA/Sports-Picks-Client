@@ -38,7 +38,7 @@ const GroupPad = ({ group }: GroupPadProps) => {
   // it just shows the members of the group, nothing else
   const memberListComponent = useMemo(() => {
     if (!openMemberList) {
-      return <h1 className="text-2xl font-bold mb-4">Members</h1>;
+      return null;
     }
 
     if (isLoading) {
@@ -51,7 +51,6 @@ const GroupPad = ({ group }: GroupPadProps) => {
 
     return (
       <div className="">
-        <h1 className="text-2xl font-bold mb-4">Members</h1>
         <ul className="space-y-4">
           {groupMembers?.map((member) => (
             <li key={member.user_id}>
@@ -77,7 +76,8 @@ const GroupPad = ({ group }: GroupPadProps) => {
   }, [groupMembers, isError, isLoading, openMemberList]);
 
   return (
-    <div className=" w-full">
+    <div className=" w-full flex flex-row flex-wrap">
+      <h1 className="text-2xl font-bold ">Members</h1>
       {!openMemberList ? (
         <FaAngleDown
           onClick={() => setOpenMemberList(true)}
@@ -91,7 +91,7 @@ const GroupPad = ({ group }: GroupPadProps) => {
           size={24}
         />
       )}
-      {memberListComponent}
+      <div className="w-full">{memberListComponent}</div>
     </div>
   );
 };

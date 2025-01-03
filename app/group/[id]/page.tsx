@@ -38,6 +38,9 @@ const GroupHomePage: React.FC<{
   //get grou
   const { data: group, isLoading, isError } = useGetGroupById(id);
 
+  const [showSummaryOfSelectedWeek, setShowSummaryOfSelectedWeek] =
+    useState<boolean>(false);
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -57,16 +60,18 @@ const GroupHomePage: React.FC<{
           Group Details
         </h1>
         <div className="mb-4 dark:text-white">
-          <span className="font-semibold">Group ID:</span> {id}
-        </div>
-        <div className="mb-4 dark:text-white">
           <span className="font-semibold">Group Name:</span> {group.group_name}
         </div>
         {/* View Results */}
         <div className="mb-4 dark:text-white">
-          <Link href={`/group/${id}/scores`}>
-            <FaChartBar className="mr-2" />
-            View Results
+          <Link
+            href={`/group/${id}/scores`}
+            className="flex flex-row items-center"
+          >
+            <FaChartBar className="mr-2" size={30} />
+            <h1 className="text-2xl font-bold mb-4 dark:text-white">
+              View Results
+            </h1>
           </Link>
         </div>
         <div className="mb-4 dark:text-white">
