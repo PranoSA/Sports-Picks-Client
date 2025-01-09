@@ -172,7 +172,8 @@ const joinGroup = async (
     throw new Error('Network response was not okay');
   }
 
-  return res.json();
+  //return res.json();
+  return [];
 };
 
 export const useJoinGroup = (): UseMutationResult<

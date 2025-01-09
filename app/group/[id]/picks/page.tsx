@@ -1128,169 +1128,186 @@ const Page: React.FC<{
             return (
               <li
                 key={index}
-                className={`p-4 border rounded cursor-pointer w-1/2  
-                  flex flex-row justify-between flex-wrap text-black
-                ${
-                  bet_statuses[index] === 'in-progress'
-                    ? 'bg-yellow-200 text-black'
-                    : bet_statuses[index] === 'success'
-                    ? 'bg-green-500 text-white'
-                    : bet_statuses[index] === 'fail'
-                    ? 'bg-red-200 text-white'
-                    : 'bg-white dark:bg-gray-500 dark:text-gray-200'
-                }
+                className={` cursor-pointer w-1/2  
+                  flex flex-row justify-between flex-wrap text-black bg-black dark:bg-black
+
                   `}
               >
-                <div className="w-full flex flex-row justify-between text-black">
-                  {bet.type === 'spread'
-                    ? `Spread: ${bet.num_points}`
-                    : bet.type === 'over_under'
-                    ? `Over/Under: ${bet.num_points}`
-                    : `Moneyline : ${bet.num_points}`}
-                  {is_correct && has_finished && (
-                    <span className="ml-2 text-green-500">
-                      <FaCheck className="text-green-500" size={20} />
-                    </span>
-                  )}
-                  {/* If has started -> show a lock */}
-                  {has_started && (
-                    <FaLock className="ml-2 text-red-500" size={20} />
-                  )}
-                  {/* IF Has not started -> show a unlock */}
-                  {!has_started && !empty_bet && (
-                    <FaLockOpen className="ml-2 text-green-500" size={20} />
-                  )}
-                  {
-                    //empty bet -> Show something to draw attention from the user to make a choice
-                    empty_bet && (
-                      <span className="ml-2 text-red-500 bg-red-200">
-                        <FaExclamationTriangle
-                          className="text-red-500"
-                          size={20}
-                        />{' '}
-                        NO BET !
-                      </span>
-                    )
-                  }
-                  {
-                    !is_correct && has_finished && (
-                      <span className="ml-2 text-red-500">
-                        <FaTimes className="text-red-500" size={20} />
-                      </span>
-                    ) //if the choice is wrong and the game has finished
-                  }
-                  {
-                    is_correct && has_finished && (
+                <div
+                  //add margin all around
+                  //make it black around
+                  className={` w-full p-4 
+                      border-8 border-black
+                                    ${
+                                      bet_statuses[index] === 'in-progress'
+                                        ? 'bg-yellow-200 text-black'
+                                        : bet_statuses[index] === 'success'
+                                        ? 'bg-green-500 text-white'
+                                        : bet_statuses[index] === 'fail'
+                                        ? 'bg-red-300 text-white'
+                                        : !empty_bet
+                                        ? 'bg-green-200 dark:bg-green-200'
+                                        : empty_bet
+                                        ? 'bg-red-100 dark:bg-red-100'
+                                        : 'bg-white dark:bg-gray-500 dark:text-gray-200'
+                                    }
+                  `}
+                >
+                  <div className="w-full flex flex-row justify-between text-black">
+                    <h1 className="font-bold text-green-800 font-2xl ">
+                      {bet.type === 'spread'
+                        ? `Spread: ${bet.num_points}`
+                        : bet.type === 'over_under'
+                        ? `Over/Under: ${bet.num_points}`
+                        : `Moneyline : ${bet.num_points}`}
+                    </h1>
+                    {is_correct && has_finished && (
                       <span className="ml-2 text-green-500">
-                        <FaCheck className="text-blue-700" size={20} />
+                        <FaCheck className="text-green-500" size={20} />
                       </span>
-                    ) //if the choice is correct and the game has finished
-                  }
-                  {
-                    //pending
-                    has_started && !has_finished && (
-                      <div className="ml-2 text-yellow-500 flex flex-row">
-                        ⌛
-                        <FaSpinner className="animate-spin" size={20} />
-                      </div>
-                    )
-                  }
+                    )}
+                    {/* If has started -> show a lock */}
+                    {has_started && (
+                      <FaLock className="ml-2 text-red-500" size={20} />
+                    )}
+                    {/* IF Has not started -> show a unlock */}
+                    {!has_started && !empty_bet && (
+                      <FaLockOpen className="ml-2 text-green-500" size={20} />
+                    )}
+                    {
+                      //empty bet -> Show something to draw attention from the user to make a choice
+                      empty_bet && (
+                        <span className="ml-2 text-red-500 bg-red-200">
+                          <FaExclamationTriangle
+                            className="text-red-500"
+                            size={20}
+                          />{' '}
+                          NO BET !
+                        </span>
+                      )
+                    }
+                    {
+                      !is_correct && has_finished && (
+                        <span className="ml-2 text-red-500">
+                          <FaTimes className="text-red-500" size={20} />
+                        </span>
+                      ) //if the choice is wrong and the game has finished
+                    }
+                    {
+                      is_correct && has_finished && (
+                        <span className="ml-2 text-green-500">
+                          <FaCheck className="text-blue-700" size={20} />
+                        </span>
+                      ) //if the choice is correct and the game has finished
+                    }
+                    {
+                      //pending
+                      has_started && !has_finished && (
+                        <div className="ml-2 text-yellow-500 flex flex-row">
+                          ⌛
+                          <FaSpinner className="animate-spin" size={20} />
+                        </div>
+                      )
+                    }
+                  </div>
+
+                  {/* Div for time information */}
+
+                  {/* Information on time left if the bet has no started */}
+                  <div className="text-sm w-full">
+                    {bet_statuses[index] === 'hasnt-started' &&
+                      has_made_pick && (
+                        <span>
+                          {TimeLeftToChange.days}d {TimeLeftToChange.hours}h{' '}
+                          {TimeLeftToChange.minutes}m {TimeLeftToChange.seconds}
+                          s
+                        </span>
+                      )}
+                  </div>
+                  {/* Div for the game information */}
+                  <div className="w-full justify-around flex flex-row">
+                    {
+                      game_for_bet && (
+                        <span className="ml-2 text-lg text-black">
+                          {game_for_bet.home_team}
+                          {home_team_string} @ {game_for_bet.away_team}{' '}
+                          {away_team_string}
+                        </span>
+                      ) //if the game has finished
+                    }
+                  </div>
+
+                  {/* Div for Editing the bet */}
+                  <div className="w-full flex flex-row justify-around mt-4">
+                    {/* Icon TO Make a selection */}
+                    {bet_statuses[index] === 'hasnt-started' && (
+                      <button
+                        onClick={() => {
+                          //if the status is not "hasnt-started" -> don't allow the user to select the bet
+
+                          //log the game corresponding to the bet
+
+                          const choice = choices.find(
+                            (choice) => choice.bet_id === index
+                          );
+
+                          const game = games.find(
+                            (game) => game.game_id === choice?.game_id
+                          );
+
+                          if (bet_statuses[index] !== 'hasnt-started') {
+                            alert('Game has already started');
+                            return;
+                          }
+
+                          handleBetSelection(bet);
+                        }}
+                        className="p-2 border rounded cursor-pointer"
+                      >
+                        <FaPencilAlt
+                          className="ml-2 text-blue-500 cursor-pointer"
+                          size={20}
+                        />
+                        {empty_bet ? 'Make Selection' : 'Edit Selection'}
+                      </button>
+                    )}
+
+                    {/* ICon To CLEAR a selection */}
+                    {!empty_bet && bet_statuses[index] === 'hasnt-started' && (
+                      <button
+                        className="p-2 border rounded cursor-pointer"
+                        onClick={() => {
+                          if (bet_statuses[index] !== 'hasnt-started') {
+                            alert('Game has already started');
+                            return;
+                          }
+
+                          //edit choices
+                          const index_of_choice = choices.findIndex(
+                            (choice) => choice.bet_id === index
+                          );
+
+                          if (index_of_choice !== -1) {
+                            setChoices([
+                              ...choices.slice(0, index_of_choice),
+                              ...choices.slice(index_of_choice + 1),
+                            ]);
+                          }
+
+                          //clearChoice(index);
+                        }}
+                      >
+                        <FaTrashAlt
+                          className="ml-2 text-red-500 cursor-pointer"
+                          size={20}
+                        />
+                        Delete Selection
+                      </button>
+                    )}
+                  </div>
+
+                  {/* If has finished -> show a checkmark */}
                 </div>
-
-                {/* Div for time information */}
-
-                {/* Information on time left if the bet has no started */}
-                <div className="text-sm w-full">
-                  {bet_statuses[index] === 'hasnt-started' && has_made_pick && (
-                    <span>
-                      {TimeLeftToChange.days}d {TimeLeftToChange.hours}h{' '}
-                      {TimeLeftToChange.minutes}m {TimeLeftToChange.seconds}s
-                    </span>
-                  )}
-                </div>
-                {/* Div for the game information */}
-                <div className="w-full justify-around flex flex-row">
-                  {
-                    game_for_bet && (
-                      <span className="ml-2 text-lg text-black">
-                        {game_for_bet.home_team}
-                        {home_team_string} @ {game_for_bet.away_team}{' '}
-                        {away_team_string}
-                      </span>
-                    ) //if the game has finished
-                  }
-                </div>
-
-                {/* Div for Editing the bet */}
-                <div className="w-full flex flex-row justify-around mt-4">
-                  {/* Icon TO Make a selection */}
-                  {bet_statuses[index] === 'hasnt-started' && (
-                    <button
-                      onClick={() => {
-                        //if the status is not "hasnt-started" -> don't allow the user to select the bet
-
-                        //log the game corresponding to the bet
-
-                        const choice = choices.find(
-                          (choice) => choice.bet_id === index
-                        );
-
-                        const game = games.find(
-                          (game) => game.game_id === choice?.game_id
-                        );
-
-                        if (bet_statuses[index] !== 'hasnt-started') {
-                          alert('Game has already started');
-                          return;
-                        }
-
-                        handleBetSelection(bet);
-                      }}
-                      className="p-2 border rounded cursor-pointer"
-                    >
-                      <FaPencilAlt
-                        className="ml-2 text-blue-500 cursor-pointer"
-                        size={20}
-                      />
-                      {empty_bet ? 'Make Selection' : 'Edit Selection'}
-                    </button>
-                  )}
-
-                  {/* ICon To CLEAR a selection */}
-                  {!empty_bet && bet_statuses[index] === 'hasnt-started' && (
-                    <button
-                      className="p-2 border rounded cursor-pointer"
-                      onClick={() => {
-                        if (bet_statuses[index] !== 'hasnt-started') {
-                          alert('Game has already started');
-                          return;
-                        }
-
-                        //edit choices
-                        const index_of_choice = choices.findIndex(
-                          (choice) => choice.bet_id === index
-                        );
-
-                        if (index_of_choice !== -1) {
-                          setChoices([
-                            ...choices.slice(0, index_of_choice),
-                            ...choices.slice(index_of_choice + 1),
-                          ]);
-                        }
-
-                        //clearChoice(index);
-                      }}
-                    >
-                      <FaTrashAlt
-                        className="ml-2 text-red-500 cursor-pointer"
-                        size={20}
-                      />
-                      Delete Selection
-                    </button>
-                  )}
-                </div>
-
-                {/* If has finished -> show a checkmark */}
               </li>
             );
           })}

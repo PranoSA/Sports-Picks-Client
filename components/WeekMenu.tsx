@@ -190,8 +190,15 @@ const WeekMenu: React.FC<WeekMenuProps> = ({ group }) => {
           </h2>
           <div className="flex gap-4 bg-yellow-200">
             <Link href={`/group/${group.group_id}/picks`}>
-              <FaCheckCircle />
+              <FaCheckCircle
+                title="Make Picks"
+                className="text-green-500"
+                size={25}
+              />
               <span className="ml-2">Make Picks</span>
+              <span className="ml-2">
+                [{picks?.length || 0}/{group.bets.length || 0} picks made]
+              </span>
             </Link>
           </div>
           {/*Information About when the week ends */}
@@ -373,7 +380,7 @@ const WeekMenuComponent: React.FC<{ week: FetchedWeek }> = ({ week }) => {
         </button>
       ) : (
         <button onClick={() => setShowPickInformation(true)}>
-          Show Pick Informaition <FaArrowDown className="mr-2" />
+          Show Week Games Informationn <FaArrowDown className="mr-2" />
         </button>
       )}
       {showPickInformation && (
