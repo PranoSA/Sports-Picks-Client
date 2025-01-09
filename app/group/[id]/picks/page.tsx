@@ -93,6 +93,10 @@ const Page: React.FC<{
 
   const choicesRef = useRef<InsertionChoice[]>(choices);
 
+  const [savingsStates, setSavingStates] = useState<
+    'nothing' | 'saving' | 'saved' | 'error'
+  >('nothing');
+
   //on mount -> set the choices to the fetched choices
   const {
     data: picks,
@@ -245,8 +249,29 @@ const Page: React.FC<{
 
   const submitPicks = useAddPicks(id);
 
-  const handleSubmission = useCallback(() => {
+  const handleSubmission = useCallback(async () => {
     console.log('Handling Submission');
+
+    //set to saving
+    setSavingStates('saving');
+
+    //wait for mutation
+    try {
+      const picks_saved = await submitPicks.mutateAsync(choices);
+      //set to saved
+      setSavingStates('saved');
+      //wait 2 seconds and set to nothing
+      setTimeout(() => {
+        setSavingStates('nothing');
+      }, 2000);
+    } catch (e) {
+      setSavingStates('error');
+      //wait 2 seconds and set to nothing
+      setTimeout(() => {
+        setSavingStates('nothing');
+      }, 2000);
+    }
+
     submitPicks.mutate(choices);
   }, [choices, submitPicks]);
 
@@ -872,8 +897,32 @@ const Page: React.FC<{
   };
 
   return (
-    <div className="p-4 flex flex-col items-center bg-gray-500 border-4 ">
+    <div className="relative p-4 flex flex-col items-center bg-gray-500 border-4 ">
+      {/* Put Information About Loading at the bottom left */}
+      <div className="fixed bottom-0 right-0 p-2 bg-white dark:bg-gray-800 dark:text-gray-200">
+        {/* This is information about the choices being saved */}
+        {savingsStates === 'saving' ? (
+          <div className="flex flex-row items-center">
+            <FaSpinner className="animate-spin mr-2" />
+            <span>Saving...</span>
+          </div>
+        ) : savingsStates === 'saved' ? (
+          <div className="flex flex-row items-center">
+            <FaCheck className="mr-2" />
+            <span>Saved</span>
+          </div>
+        ) : savingsStates === 'error' ? (
+          <div className="flex flex-row items-center">
+            <FaExclamationTriangle className="mr-2" />
+            <span>Error</span>
+          </div>
+        ) : (
+          <div className="flex flex-row items-center"></div>
+        )}
+      </div>
+
       {/* Options Between showing selections vs choosing bets */}
+
       <div className="w-full max-w-lg mb-4">
         {viewSelections ? (
           <>
