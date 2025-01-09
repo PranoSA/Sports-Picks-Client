@@ -341,6 +341,40 @@ const WeekMenuComponent: React.FC<{ week: FetchedWeek }> = ({ week }) => {
   const [showPickInformation, setShowPickInformation] =
     useState<boolean>(false);
 
+  const total_games = useMemo(() => {
+    if (!games) {
+      return 0;
+    }
+    return games.length;
+  }, [games]);
+
+  const games_started = useMemo(() => {
+    if (!games) {
+      return [];
+    }
+    return games.filter((game) => {
+      return game.kickoff < new Date();
+    });
+  }, [games]);
+
+  const games_pending = useMemo(() => {
+    if (!games) {
+      return [];
+    }
+    return games.filter((game) => {
+      return game.kickoff <= new Date() && !game.finished;
+    });
+  }, [games]);
+
+  const games_completed = useMemo(() => {
+    if (!games) {
+      return [];
+    }
+    return games.filter((game) => {
+      return game.finished === true;
+    });
+  }, [games]);
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -355,20 +389,6 @@ const WeekMenuComponent: React.FC<{ week: FetchedWeek }> = ({ week }) => {
 
   //now -> show the number of games that have started, the number of games that are pending
   //and the number of games that are completed, and the total number of games
-
-  const games_started = games.filter((game) => {
-    return game.kickoff < new Date();
-  });
-
-  const games_pending = games.filter((game) => {
-    return game.kickoff < new Date() && !game.finished;
-  });
-
-  const games_completed = games.filter((game) => {
-    return game.finished === true;
-  });
-
-  const total_games = games.length;
 
   //display this information in a nice way
   return (
