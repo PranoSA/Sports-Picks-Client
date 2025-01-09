@@ -85,6 +85,7 @@ const JoinPage: React.FC<{
     window.location.href = `/group/${id}`;
 
     //redirect to the group page
+    window.location.href = `/group/${id}`;
   };
 
   if (status === 'loading') {
