@@ -148,15 +148,23 @@ const ListOfGroupsComponent = () => {
             key={group.group_id}
             className="flex flex-wrap p-4 border rounded bg-white dark:bg-gray-600 shadow-md w-full max-w-1/2"
           >
-            <Link href={`/group/${group.group_id}`}>
+            <Link
+              href={`/group/${group.group_id}`}
+              className="border-b-2 border-transparent hover:border-blue-500 hover:bg-gray-100 dark:hover:bg-blue-500 "
+            >
               <div className="flex flex-row w-full">
                 <h1 className="text-xl font-bold dark:text-white m-3">
                   {group.group_name}
                 </h1>
+
                 <FaExternalLinkAlt
                   size={16}
                   className="cursor-pointer text-blue-500 m-4"
                 />
+                <h1 className="text-xl font-bold dark:text-white m-3">
+                  {' '}
+                  Visit Group{' '}
+                </h1>
                 {/* */}
               </div>
             </Link>

@@ -188,14 +188,25 @@ const WeekMenu: React.FC<WeekMenuProps> = ({ group }) => {
             {new Date(presentWeek.start_date).toDateString()} -{' '}
             {new Date(presentWeek.end_date).toDateString()}
           </h2>
-          <div className="flex gap-4 bg-yellow-200">
+          <div
+            className="flex gap-4 bg-yellow-200
+            hover:bg-blue-200 
+            border-4 border-blue-200 rounded p-2
+          
+          
+          "
+            title="Make Picks"
+          >
             <Link href={`/group/${group.group_id}/picks`}>
               <FaCheckCircle
                 title="Make Picks"
                 className="text-green-500"
                 size={25}
               />
-              <span className="ml-2">Make Picks</span>
+              <span className="ml-2">
+                {' '}
+                {picks?.length || 0 > 0 ? 'Change & View Picks' : 'Make Picks'}
+              </span>
               <span className="ml-2">
                 [{picks?.length || 0}/{group.bets.length || 0} picks made]
               </span>
@@ -400,7 +411,7 @@ const WeekMenuComponent: React.FC<{ week: FetchedWeek }> = ({ week }) => {
         </button>
       ) : (
         <button onClick={() => setShowPickInformation(true)}>
-          Show Week Games Informationn <FaArrowDown className="mr-2" />
+          Show Week Games Information <FaArrowDown className="mr-2" />
         </button>
       )}
       {showPickInformation && (
@@ -460,7 +471,14 @@ const SummaryOfSelectionsPanel: React.FC<SummaryOfSelectionsPanelProps> = ({
 
   return (
     <div>
-      <h1>Summary of Selections</h1>
+      <h1>
+        Summary of Selections [
+        {
+          //length of picks made
+          picks.length || 0
+        }
+        /{group.bets.length} Picks Made]
+      </h1>
       {bets_with_status.map((bet) => {
         return (
           <div key={bet.type + bet.num_points} className="flex flex-row">
