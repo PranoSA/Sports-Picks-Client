@@ -47,7 +47,6 @@ import {
 } from 'next-auth/react';
 
 import queryClient from '@/queries/queryclient';
-import { group } from 'console';
 
 const PageWithAuthProvider: React.FC<{
   params: {
