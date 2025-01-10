@@ -17,6 +17,35 @@ import { FaChartBar } from 'react-icons/fa';
 //get games by week
 import { useGetGamesByWeek } from '@/queries/games';
 
+//login
+import {
+  SessionProvider,
+  SessionProviderProps,
+  signIn,
+  signOut,
+  useSession,
+} from 'next-auth/react';
+
+const GroupHomePageWithSessionProvider = ({
+  params,
+}: {
+  params: {
+    id: string;
+  };
+}) => {
+  const sessionProviderProps: SessionProviderProps = {
+    children: (
+      <GroupHomePageWithProvider
+        params={{
+          id: params.id,
+        }}
+      />
+    ),
+  };
+
+  return <SessionProvider {...sessionProviderProps} />;
+};
+
 //
 const GroupHomePageWithProvider: React.FC<{
   params: {
@@ -36,10 +65,48 @@ const GroupHomePage: React.FC<{
   };
 }> = ({ params: { id } }) => {
   //get grou
+
+  //use session
+  const { data: session, status } = useSession();
+
   const { data: group, isLoading, isError } = useGetGroupById(id);
+
+  useEffect(() => {
+    //set local storage bearer token
+    if (typeof window !== 'undefined' && session) {
+      localStorage.setItem('accessToken', session.accessToken as string);
+      //set date_redeemed -> store unix timestamp
+      const now_time = Date.now();
+      const unix_time = Math.floor(now_time / 1000);
+
+      localStorage.setItem('date_redeemed', unix_time.toString());
+    }
+  }, [session]);
 
   const [showSummaryOfSelectedWeek, setShowSummaryOfSelectedWeek] =
     useState<boolean>(false);
+
+  if (!session) {
+    return (
+      <div className="grid place-items-center h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+        <div className="text-center p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md">
+          <h1 className="text-3xl font-bold mb-4">
+            Welcome to Sports Betting App
+          </h1>
+          <p className="mb-6">
+            This app allows you to create groups, make choices, and track your
+            bets. Join now and start making your picks!
+          </p>
+          <button
+            onClick={() => signIn('keycloak')}
+            className="p-4 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 transition duration-300"
+          >
+            Login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -84,4 +151,4 @@ const GroupHomePage: React.FC<{
   );
 };
 
-export default GroupHomePageWithProvider;
+export default GroupHomePageWithSessionProvider;

@@ -38,8 +38,28 @@ the total score with a
 week by week graph
 */
 
+import {
+  SessionProvider,
+  SessionProviderProps,
+  signIn,
+  signOut,
+  useSession,
+} from 'next-auth/react';
+
 import queryClient from '@/queries/queryclient';
 import { group } from 'console';
+
+const PageWithAuthProvider: React.FC<{
+  params: {
+    id: string;
+  };
+}> = ({ params }) => {
+  const sessionProviderProps: SessionProviderProps = {
+    children: <PageWithProvider params={params} />,
+  };
+
+  return <SessionProvider {...sessionProviderProps} />;
+};
 
 const PageWithProvider: React.FC<{
   params: {
@@ -60,6 +80,8 @@ const Page: React.FC<{
   const { data: weeks, isLoading, isError } = useGetWeeksForCurrentYear();
 
   const [selectedWeek, setSelectedWeek] = useState<string>('all');
+
+  const { data: session, status } = useSession();
 
   const {
     data: groupScores,
@@ -125,6 +147,28 @@ const Page: React.FC<{
 
     return scores;
   }, [groupScores, selectedWeek]);
+
+  if (!session) {
+    return (
+      <div className="grid place-items-center h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+        <div className="text-center p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md">
+          <h1 className="text-3xl font-bold mb-4">
+            Welcome to Sports Betting App
+          </h1>
+          <p className="mb-6">
+            This app allows you to create groups, make choices, and track your
+            bets. Join now and start making your picks!
+          </p>
+          <button
+            onClick={() => signIn('keycloak')}
+            className="p-4 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 transition duration-300"
+          >
+            Login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -282,4 +326,4 @@ const ScoreGraph: React.FC<{ scores: AllScores }> = ({ scores }) => {
   );
 };
 
-export default PageWithProvider;
+export default PageWithAuthProvider;

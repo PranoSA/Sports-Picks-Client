@@ -56,6 +56,14 @@ import { useGetGroupById } from '@/queries/groups';
 import { useGetWeeks } from '@/queries/weeks';
 import { useGetPicks, useAddPicks } from '@/queries/picks';
 
+import {
+  SessionProvider,
+  SessionProviderProps,
+  signIn,
+  signOut,
+  useSession,
+} from 'next-auth/react';
+
 /**
  *
  * Sample :
@@ -63,6 +71,19 @@ import { useGetPicks, useAddPicks } from '@/queries/picks';
  *
  * This is the default page -> which will show the current week
  */
+
+const PageWithAuthProvider: React.FC<{
+  params: {
+    id: string;
+    week: string;
+  };
+}> = ({ params }) => {
+  const sessionProviderProps: SessionProviderProps = {
+    children: <PageWithQueryProvider params={params} />,
+  };
+
+  return <SessionProvider {...sessionProviderProps} />;
+};
 
 //wrap the page in the query client provider
 const PageWithQueryProvider: React.FC<{
@@ -90,6 +111,8 @@ const Page: React.FC<{
   //don't need allocated bets -> the choices will have acorresponding bet_id
   // that infers information about the bet being allocated or not
   const [choices, setChoices] = useState<InsertionChoice[]>([]);
+
+  const { data: session, status } = useSession();
 
   const choicesRef = useRef<InsertionChoice[]>(choices);
 
@@ -865,6 +888,28 @@ const Page: React.FC<{
       handleSubmission();
     }
   }, [choices]);
+
+  if (!session) {
+    return (
+      <div className="grid place-items-center h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+        <div className="text-center p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md">
+          <h1 className="text-3xl font-bold mb-4">
+            Welcome to Sports Betting App
+          </h1>
+          <p className="mb-6">
+            This app allows you to create groups, make choices, and track your
+            bets. Join now and start making your picks!
+          </p>
+          <button
+            onClick={() => signIn('keycloak')}
+            className="p-4 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 transition duration-300"
+          >
+            Login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (gamesLoading || groupLoading) {
     return <div>Loading...</div>;
@@ -2057,4 +2102,4 @@ const GameDisplayPanel: React.FC<GameDisplayPanelProps> = ({
     </div>
   );
 };
-export default PageWithQueryProvider;
+export default PageWithAuthProvider;
