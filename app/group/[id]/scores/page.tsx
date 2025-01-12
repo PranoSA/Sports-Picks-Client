@@ -199,6 +199,51 @@ const Page: React.FC<{
     return scores_potential;
   }, [groupScores, weeks]);
 
+  const communative_points_including_this_week = useMemo(() => {
+    if (!groupScores) return [];
+
+    const scores: { [key: string]: number } = {};
+
+    groupScores.forEach((weekScores: WeekScores) => {
+      weekScores.forEach((userScore: UserScore) => {
+        const { user_id, score } = userScore;
+        if (scores[user_id]) {
+          scores[user_id] += score;
+        } else {
+          scores[user_id] = score;
+        }
+      });
+    });
+
+    return scores;
+  }, [groupScores]);
+
+  const cummulative_points_last_week = useMemo(() => {
+    if (!groupScores) return [];
+
+    const scores: { [key: string]: number } = {};
+
+    const current_week_index = weeks?.findIndex(
+      (week) => {
+        const date = new Date();
+        return week.start_date < date && week.end_date > date;
+      },
+      [weeks]
+    );
+
+    if (!current_week_index) return {};
+
+    if (current_week_index === -1) return {};
+
+    const last_week_index = current_week_index - 1;
+
+    if (last_week_index < 0) return {};
+
+    const LastWeekScores = groupScores[last_week_index];
+
+    return LastWeekScores;
+  }, [groupScores, weeks]);
+
   if (!session) {
     return (
       <div className="grid place-items-center h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
@@ -344,6 +389,7 @@ const ScoreGChart: React.FC<{
     );
   });
 
+  console.log('scores_by_user', scores_by_user);
   //const scores as of last week, by getting the cummulativescores
   //and subtracting the last week
   const scores_last_week_unsorted: { [key: string]: number } = {};
@@ -362,6 +408,8 @@ const ScoreGChart: React.FC<{
   const scores_last_week = Object.fromEntries(
     Object.entries(scores_last_week_unsorted).sort(([, a], [, b]) => b - a)
   );
+
+  console.log('scores_last_week', scores_last_week);
 
   return (
     <div className="max-w-4xl mx-auto p-4">
