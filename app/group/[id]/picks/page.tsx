@@ -1484,7 +1484,8 @@ const Page: React.FC<{
                 <li
                   key={index}
                   className={`
-                    w-1/2
+                    w-full
+                    lg:w-1/2
                     p-4 border rounded mb-4 ${
                       new Date() >= game.kickoff
                         ? 'bg-red-500 text-white'
@@ -1728,7 +1729,7 @@ const SummaryOfSelectionsComponent: React.FC<SummaryOfSelectionsProps> = ({
               allocatedBet && (
                 <li
                   key={index}
-                  className="w-1/2 p-2 border rounded bg-white dark:bg-gray-700 dark:text-gray-200"
+                  className="w-full lg:w-1/2 p-2 border rounded bg-white dark:bg-gray-700 dark:text-gray-200"
                 >
                   <span>
                     Bet:{' '}
