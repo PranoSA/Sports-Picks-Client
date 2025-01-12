@@ -332,8 +332,6 @@ const ScoreGChart: React.FC<{
     );
   });
 
-  const potential_scores_by_user: { [key: string]: number[] } = {};
-
   //const scores as of last week, by getting the cummulativescores
   //and subtracting the last week
   const scores_last_week_unsorted: { [key: string]: number } = {};
@@ -341,9 +339,9 @@ const ScoreGChart: React.FC<{
   users.forEach((user) => {
     const last_week_score = last_weeks_scores.find((d) => d.user_id === user);
     if (last_week_score) {
-      scores_last_week[user] = last_week_score.score;
+      scores_last_week_unsorted[user] = last_week_score.score;
     } else {
-      scores_last_week[user] = 0;
+      scores_last_week_unsorted[user] = 0;
     }
   });
 
@@ -373,9 +371,11 @@ const ScoreGChart: React.FC<{
               //get the place of the user from last week
               //1 is the best, 2 is the second best
               //and so on
-              const last_weeks_placement = users.indexOf(user) + 1;
-
               const this_weeks_placement = users.indexOf(user) + 1;
+
+              const last_weeks_placement = Object.keys(
+                scores_last_week
+              ).findIndex((d) => d === user);
 
               const movement = last_weeks_placement - this_weeks_placement;
 
