@@ -207,7 +207,7 @@ const Page: React.FC<{
       </div>
 
       <ScoreGChart
-        last_weeks_scores={groupScores[groupScores.length - 2]}
+        last_weeks_scores={groupScores[groupScores.length - 1]}
         this_weeks_scores={groupScores[groupScores.length - 1]}
         All_Scores={groupScores}
       />
