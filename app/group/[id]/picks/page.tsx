@@ -1224,7 +1224,7 @@ const Page: React.FC<{
             return (
               <li
                 key={index}
-                className={` cursor-pointer w-1/2  
+                className={` cursor-pointer w-full lg:w-1/2  
                   flex flex-row justify-between flex-wrap text-black bg-black dark:bg-black
 
                   `}
