@@ -149,6 +149,28 @@ const Page: React.FC<{
     return scores;
   }, [groupScores, selectedWeek]);
 
+  const this_weeks_scores = useMemo(() => {
+    //find the last week
+    if (!groupScores) return [];
+
+    if (!weeks) return [];
+
+    //find the index of the current week in weeks
+    const week_index = selectedWeek
+      ? weeks.findIndex((week) => week.week_id == selectedWeek)
+      : weeks?.findIndex((week) => {
+          const date = new Date();
+          return week.start_date < date && week.end_date > date;
+        });
+
+    if (week_index === -1) return [];
+
+    //find the scores for the week
+    const scores = groupScores[week_index];
+
+    return scores;
+  }, [groupScores, selectedWeek, weeks]);
+
   if (!session) {
     return (
       <div className="grid place-items-center h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
@@ -207,8 +229,8 @@ const Page: React.FC<{
       </div>
 
       <ScoreGChart
-        last_weeks_scores={groupScores[groupScores.length - 1]}
-        this_weeks_scores={groupScores[groupScores.length - 1]}
+        last_weeks_scores={this_weeks_scores}
+        this_weeks_scores={this_weeks_scores}
         All_Scores={groupScores}
       />
 
