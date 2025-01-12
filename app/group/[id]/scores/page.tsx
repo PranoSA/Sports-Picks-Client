@@ -182,10 +182,21 @@ const Page: React.FC<{
 
     if (week_index === -1) return [];
 
-    //find the scores for the week
-    const scores = groupScores[week_index];
+    //find from the raw data the potential
+    const this_weeks_scores = groupScores[week_index];
 
-    return scores;
+    const scores_potential = this_weeks_scores.map((user_score) => {
+      const { user_id, score, week } = user_score;
+      const potential_score = score + 10;
+      return {
+        user_id,
+        score: potential_score,
+        week,
+        potential: potential_score,
+      };
+    });
+
+    return scores_potential;
   }, [groupScores, weeks]);
 
   if (!session) {
