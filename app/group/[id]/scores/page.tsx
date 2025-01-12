@@ -308,7 +308,7 @@ const ScoreGChart: React.FC<{
 
   //const scores as of last week, by getting the cummulativescores
   //and subtracting the last week
-  const scores_last_week: { [key: string]: number } = {};
+  const scores_last_week_unsorted: { [key: string]: number } = {};
 
   users.forEach((user) => {
     const last_week_score = last_weeks_scores.find((d) => d.user_id === user);
@@ -318,6 +318,10 @@ const ScoreGChart: React.FC<{
       scores_last_week[user] = 0;
     }
   });
+
+  const scores_last_week = Object.fromEntries(
+    Object.entries(scores_last_week_unsorted).sort(([, a], [, b]) => b - a)
+  );
 
   return (
     <div className="max-w-4xl mx-auto p-4">
@@ -337,26 +341,9 @@ const ScoreGChart: React.FC<{
               //get the place of the user from last week
               //1 is the best, 2 is the second best
               //and so on
-              const last_weeks_scores_sorted_by_score = last_weeks_scores
-                .slice()
-                .sort((a, b) => b.score - a.score);
+              const last_weeks_placement = users.indexOf(user) + 1;
 
-              //find placement of this user
-              const last_weeks_placement =
-                last_weeks_scores_sorted_by_score.findIndex(
-                  (d) => d.user_id === user
-                );
-
-              //find placement of this user this week
-              const this_weeks_scores_sorted_by_score = this_weeks_scores
-                .slice()
-                .sort((a, b) => b.score - a.score);
-
-              //find placement of this user
-              const this_weeks_placement =
-                this_weeks_scores_sorted_by_score.findIndex(
-                  (d) => d.user_id === user
-                );
+              const this_weeks_placement = users.indexOf(user) + 1;
 
               const movement = last_weeks_placement - this_weeks_placement;
 
