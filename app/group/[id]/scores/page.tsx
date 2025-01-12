@@ -432,6 +432,8 @@ const ScoreGChart: React.FC<{
           <thead>
             <tr>
               <th className="py-2 px-4 bg-gray-200 text-left">Username</th>
+              {/* Place */}
+              <th className="py-2 px-4 bg-gray-200 text-left">Place #.</th>
               <th className="py-2 px-4 bg-gray-200 text-left">Score</th>
               <th className="py-2 px-4 bg-gray-200 text-left">Weekly Score</th>
               {/* Potential Points For Week*/}
@@ -557,6 +559,10 @@ const ScoreGChart: React.FC<{
               return (
                 <tr key={user}>
                   <td className="py-2 px-4 border-b border-gray-200">{user}</td>
+                  {/* Place */}
+                  <td className="py-2 px-4 border-b border-gray-200">
+                    {users_sorted_by_score_tiebreaker_this_week_index}
+                  </td>
                   <td className="py-2 px-4 border-b border-gray-200">
                     {scores_by_user[user][scores_by_user[user].length - 1]}
                   </td>
