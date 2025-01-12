@@ -6,6 +6,8 @@ import { useMemo, useState } from 'react';
 
 import { UserScore, WeekScores, AllScores } from '@/types/bets_and_odds';
 
+import { FaArrowUp, FaArrowDown, FaArrowCircleRight } from 'react-icons/fa';
+
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -204,6 +206,12 @@ const Page: React.FC<{
         )}
       </div>
 
+      <ScoreGChart
+        last_weeks_scores={groupScores[groupScores.length - 2]}
+        this_weeks_scores={groupScores[groupScores.length - 1]}
+        All_Scores={groupScores}
+      />
+
       <ScoreGraph scores={groupScores} />
     </div>
   );
@@ -240,6 +248,98 @@ const WeekScoresComponent: React.FC<{ scores: { [key: string]: number } }> = ({
           </li>
         ))}
       </ul>
+    </div>
+  );
+};
+
+const ScoreGChart: React.FC<{
+  last_weeks_scores: WeekScores;
+  this_weeks_scores: WeekScores;
+  All_Scores: AllScores;
+}> = ({ last_weeks_scores, this_weeks_scores, All_Scores }) => {
+  const users = Array.from(
+    new Set(All_Scores.flat().map((d) => d.user_id))
+  ).sort();
+
+  const scores_by_user: { [key: string]: number[] } = {};
+
+  users.forEach((user) => {
+    scores_by_user[user] = [];
+    let cumulative_score = 0;
+    All_Scores.forEach((week_scores) => {
+      const user_score = week_scores.find((d) => d.user_id === user);
+      if (user_score) {
+        cumulative_score += user_score.score;
+      }
+      scores_by_user[user].push(cumulative_score);
+    });
+  });
+
+  //const scores as of last week, by getting the cummulativescores
+  //and subtracting the last week
+  const scores_last_week: { [key: string]: number } = {};
+
+  users.forEach((user) => {
+    const last_week_score = last_weeks_scores.find((d) => d.user_id === user);
+    if (last_week_score) {
+      scores_last_week[user] = last_week_score.score;
+    } else {
+      scores_last_week[user] = 0;
+    }
+  });
+
+  return (
+    <div className="max-w-4xl mx-auto p-4">
+      <h2 className="text-2xl font-bold mb-4">Score Chart</h2>
+      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+        <table className="min-w-full bg-white text-black">
+          <thead>
+            <tr>
+              <th className="py-2 px-4 bg-gray-200 text-left">Username</th>
+              <th className="py-2 px-4 bg-gray-200 text-left">Score</th>
+              <th className="py-2 px-4 bg-gray-200 text-left">Weekly Score</th>
+              <th className="py-2 px-4 bg-gray-200 text-left">Rank Change</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((user) => {
+              const scoreChange =
+                scores_last_week[user] -
+                (this_weeks_scores.find((d) => d.user_id === user)?.score ?? 0);
+
+              return (
+                <tr key={user}>
+                  <td className="py-2 px-4 border-b border-gray-200">{user}</td>
+                  <td className="py-2 px-4 border-b border-gray-200">
+                    {scores_by_user[user][scores_by_user[user].length - 1]}
+                  </td>
+                  <td className="py-2 px-4 border-b border-gray-200">
+                    {this_weeks_scores.find((d) => d.user_id === user)?.score}
+                  </td>
+                  <td className="py-2 px-4 border-b border-gray-200">
+                    {scoreChange > 0 ? (
+                      <>
+                        <FaArrowUp className="text-green-500 mr-1 text-green" />
+                        <span>{scoreChange}</span>
+                      </>
+                    ) : scoreChange < 0 ? (
+                      <>
+                        <FaArrowDown className="text-red-500 mr-1 text-red" />
+                        <span>{Math.abs(scoreChange)}</span>
+                      </>
+                    ) : (
+                      <>
+                        <FaArrowCircleRight className="text-gray-500 mr-1" />
+                        <span>{scoreChange}</span>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
