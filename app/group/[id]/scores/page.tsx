@@ -454,6 +454,8 @@ const ScoreGChart: React.FC<{
                 scores_last_week
               ).sort((a, b) => b[1] - a[1]);
 
+              console.log('Last Week Scores Sorted', last_weeks_scores_sorted);
+
               //find the  index of the first instance of the user's score
               const users_sorted_by_score_tiebreaker_last_week_index =
                 //DO NOT USE A REFERENCE TO THIS USER, ITS THE SCORE VALUE
@@ -474,12 +476,14 @@ const ScoreGChart: React.FC<{
                 (a, b) => b[1] - a[1]
               );
 
+              console.log('Total Scores Sorted', total_scores_sorted);
+
               //find the  index of the first instance of the user's score
               const users_sorted_by_score_tiebreaker_this_week_index =
                 total_scores_sorted.findIndex((d) => {
                   //DO NOIT USE A REFERENCE TO THIS USER< ITS THE SCORE VALUE
                   return d[1] === this_users_score;
-                });
+                }) + 1;
 
               console.log(
                 "This Week's Placement",
