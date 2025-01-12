@@ -387,7 +387,7 @@ const ScoreGChart: React.FC<{
               const last_weeks_placement =
                 Object.keys(scores_last_week).findIndex((d) => d === user) + 1;
 
-              const movement = last_weeks_placement - this_weeks_placement;
+              const movement = this_weeks_placement - last_weeks_placement;
 
               const scoreChange = movement;
 
