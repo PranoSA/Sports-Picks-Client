@@ -76,12 +76,12 @@ export const useGetGroups = (): UseQueryResult<FetchedGroup[], unknown> => {
 const createGroup = async (group: InsertionGroup) => {
   const url = `${process.env.NEXT_PUBLIC_API_URL}/groups`;
 
+  const headers = getHeaders();
+  headers.append('Content-Type', 'application/json');
+
   const res = await fetch(url, {
     method: 'POST',
-    headers: {
-      ...getHeaders(),
-      'Content-Type': 'application/json',
-    },
+    headers: headers,
     body: JSON.stringify(group),
   });
 
@@ -172,12 +172,12 @@ const joinGroup = async (
 ): Promise<FetchedGroup_User[]> => {
   const url = `${process.env.NEXT_PUBLIC_API_URL}/groups/${joinGroup.group_id}/users`;
 
+  const headers = getHeaders();
+  headers.append('Content-Type', 'application/json');
+
   const res = await fetch(url, {
     method: 'POST',
-    headers: {
-      ...getHeaders(),
-      'Content-Type': 'application/json',
-    },
+    headers: headers,
     body: JSON.stringify(joinGroup),
   });
 
