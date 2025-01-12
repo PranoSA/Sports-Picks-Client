@@ -321,6 +321,7 @@ const ScoreGChart: React.FC<{
   console.log('this_weeks_scores', this_weeks_scores);
   console.log('last_weeks_scores', last_weeks_scores);
   console.log('All_Scores', All_Scores);
+  console.log('unsorted_users', unsorted_users);
 
   const scores_by_user: { [key: string]: number[] } = {};
 
