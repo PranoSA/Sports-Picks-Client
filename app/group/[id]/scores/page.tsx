@@ -447,6 +447,40 @@ const ScoreGChart: React.FC<{
               //1 is the best, 2 is the second best
               //and so on
 
+              const this_users_Score_last_week = scores_last_week[user];
+
+              //create an array of only the values sorted by the score
+              const last_weeks_scores_sorted = Object.entries(
+                scores_last_week
+              ).sort((a, b) => b[1] - a[1]);
+
+              //find the  index of the first instance of the user's score
+              const users_sorted_by_score_tiebreaker_last_week_index =
+                //DO NOT USE A REFERENCE TO THIS USER, ITS THE SCORE VALUE
+                last_weeks_scores_sorted.findIndex(
+                  (d) => d[1] === this_users_Score_last_week
+                ) + 1;
+
+              //now find this week's placement
+              const this_users_score = scores_total[user];
+
+              //create an array of only the values sorted by the score
+              const total_scores_sorted = Object.entries(scores_total).sort(
+                (a, b) => b[1] - a[1]
+              );
+
+              //find the  index of the first instance of the user's score
+              const users_sorted_by_score_tiebreaker_this_week_index =
+                total_scores_sorted.findIndex((d) => {
+                  //DO NOIT USE A REFERENCE TO THIS USER< ITS THE SCORE VALUE
+                  return d[1] === this_users_score;
+                });
+
+              //now find the movement
+              const movement =
+                users_sorted_by_score_tiebreaker_last_week_index -
+                users_sorted_by_score_tiebreaker_this_week_index;
+
               //use scores_total to get the current place (with tiebreaker)
 
               const total_scores = Object.entries(scores_total);
@@ -462,7 +496,9 @@ const ScoreGChart: React.FC<{
               });
 
               //the first instance of that user's score
-              const users_score = total_scores.find((d) => d[0] === user);
+              const users_score = total_scores.find(
+                (d) => d[1] === this_users_score
+              );
 
               const users_sorted_by_score_tiebreaker_this_user_index =
                 total_scores.findIndex((d) => d[0] === user) + 1;
@@ -495,11 +531,7 @@ const ScoreGChart: React.FC<{
                   (d) => d.user_id === user
                 ) + 1;
 
-              const movement = this_weeks_placement - last_weeks_placement;
-
               console.log('User', user);
-              console.log("This week's placement", this_weeks_placement);
-              console.log("Last week's placement", last_weeks_placement);
 
               const scoreChange = movement;
 
