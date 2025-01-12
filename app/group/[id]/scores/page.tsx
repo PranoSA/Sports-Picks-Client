@@ -156,12 +156,10 @@ const Page: React.FC<{
     if (!weeks) return [];
 
     //find the index of the current week in weeks
-    const week_index = selectedWeek
-      ? weeks.findIndex((week) => week.week_id == selectedWeek)
-      : weeks?.findIndex((week) => {
-          const date = new Date();
-          return week.start_date < date && week.end_date > date;
-        });
+    const week_index = weeks?.findIndex((week) => {
+      const date = new Date();
+      return week.start_date < date && week.end_date > date;
+    });
 
     if (week_index === -1) return [];
 
