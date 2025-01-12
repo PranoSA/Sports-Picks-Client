@@ -389,7 +389,7 @@ const ScoreGChart: React.FC<{
     );
   });
 
-  console.log('users', users);
+  console.log('sorted users', users);
 
   console.log('scores_by_user', scores_by_user);
   //const scores as of last week, by getting the cummulativescores
@@ -411,7 +411,18 @@ const ScoreGChart: React.FC<{
     Object.entries(scores_last_week_unsorted).sort(([, a], [, b]) => b - a)
   );
 
+  const scores_total = Object.fromEntries(
+    Object.entries(scores_by_user).map(([user, scores]) => [
+      user,
+      scores[scores.length - 1],
+    ])
+  );
+
+  console.log('scores_total', scores_total);
+
   console.log('scores_last_week', scores_last_week);
+
+  console.log("users'", users);
 
   return (
     <div className="max-w-4xl mx-auto p-4">
@@ -435,24 +446,38 @@ const ScoreGChart: React.FC<{
               //get the place of the user from last week
               //1 is the best, 2 is the second best
               //and so on
-              const users_sorted_by_score_tiebreaker_this_user = users.sort(
-                (a, b) => {
-                  const score_a =
-                    scores_by_user[a][scores_by_user[a].length - 1];
-                  const score_b =
-                    scores_by_user[b][scores_by_user[b].length - 1];
-                  if (score_a === score_b) {
-                    return scores_last_week[b] - scores_last_week[a];
-                  }
-                  return score_b - score_a;
+
+              //use scores_total to get the current place (with tiebreaker)
+
+              const total_scores = Object.entries(scores_total);
+
+              //sort by score
+              total_scores.sort((a, b) => {
+                const score_a = a[1];
+                const score_b = b[1];
+                if (score_a === score_b) {
+                  return scores_last_week[b[0]] - scores_last_week[a[0]];
                 }
-              );
+                return score_b - score_a;
+              });
+
+              //the first instance of that user's score
+              const users_score = total_scores.find((d) => d[0] === user);
+
+              const users_sorted_by_score_tiebreaker_this_user_index =
+                total_scores.findIndex((d) => d[0] === user) + 1;
 
               const this_weeks_placement =
-                users_sorted_by_score_tiebreaker_this_user.findIndex(
-                  (d) => d === user
-                ) + 1;
+                users_sorted_by_score_tiebreaker_this_user_index;
 
+              //now find last weeks_placement
+              const users_score_last_week = Object.entries(scores_last_week);
+
+              const this_users_score_last_week = users_score_last_week.find(
+                (d) => d[0] === user
+              );
+
+              //count how many had better scores
               const last_weeks_scores_tiebreaker_this_user =
                 last_weeks_scores.sort((a, b) => {
                   const score_a = a.score;
