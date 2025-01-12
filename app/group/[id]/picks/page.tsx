@@ -1182,7 +1182,7 @@ const Page: React.FC<{
                 ? //make sure pick
 
                   choice_for_bet?.pick
-                  ? `(${game_for_bet?.spread || 0 > 0 ? '+' : ''} ${Math.abs(
+                  ? `(${game_for_bet?.spread || 0 > 0 ? '-' : ''} ${Math.abs(
                       game_for_bet?.spread || 0
                     )})`
                   : ''
@@ -1325,9 +1325,9 @@ const Page: React.FC<{
                     {
                       game_for_bet && (
                         <span className="ml-2 text-lg text-black">
+                          {game_for_bet.away_team} {away_team_string} @
                           {game_for_bet.home_team}
-                          {home_team_string} @ {game_for_bet.away_team}{' '}
-                          {away_team_string}
+                          {home_team_string}
                         </span>
                       ) //if the game has finished
                     }
