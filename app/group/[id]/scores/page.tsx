@@ -461,6 +461,11 @@ const ScoreGChart: React.FC<{
                   (d) => d[1] === this_users_Score_last_week
                 ) + 1;
 
+              console.log(
+                "Last Week's Placement",
+                users_sorted_by_score_tiebreaker_last_week_index
+              );
+
               //now find this week's placement
               const this_users_score = scores_total[user];
 
@@ -475,6 +480,11 @@ const ScoreGChart: React.FC<{
                   //DO NOIT USE A REFERENCE TO THIS USER< ITS THE SCORE VALUE
                   return d[1] === this_users_score;
                 });
+
+              console.log(
+                "This Week's Placement",
+                users_sorted_by_score_tiebreaker_this_week_index
+              );
 
               //now find the movement
               const movement =
