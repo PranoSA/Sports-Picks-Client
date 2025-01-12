@@ -167,7 +167,26 @@ const Page: React.FC<{
     const scores = groupScores[week_index];
 
     return scores;
-  }, [groupScores, selectedWeek, weeks]);
+  }, [groupScores, weeks]);
+
+  const this_weeks_potential_scores = useMemo(() => {
+    if (!groupScores) return [];
+
+    if (!weeks) return [];
+
+    //find the index of the current week in weeks
+    const week_index = weeks?.findIndex((week) => {
+      const date = new Date();
+      return week.start_date < date && week.end_date > date;
+    });
+
+    if (week_index === -1) return [];
+
+    //find the scores for the week
+    const scores = groupScores[week_index];
+
+    return scores;
+  }, [groupScores, weeks]);
 
   if (!session) {
     return (
@@ -230,6 +249,7 @@ const Page: React.FC<{
         last_weeks_scores={this_weeks_scores}
         this_weeks_scores={this_weeks_scores}
         All_Scores={groupScores}
+        this_weeks_potential_scores={this_weeks_potential_scores}
       />
 
       <ScoreGraph scores={groupScores} />
@@ -276,7 +296,13 @@ const ScoreGChart: React.FC<{
   last_weeks_scores: WeekScores;
   this_weeks_scores: WeekScores;
   All_Scores: AllScores;
-}> = ({ last_weeks_scores, this_weeks_scores, All_Scores }) => {
+  this_weeks_potential_scores: WeekScores;
+}> = ({
+  last_weeks_scores,
+  this_weeks_scores,
+  All_Scores,
+  this_weeks_potential_scores,
+}) => {
   const unsorted_users = Array.from(
     new Set(All_Scores.flat().map((d) => d.user_id))
   ).sort();
@@ -306,6 +332,8 @@ const ScoreGChart: React.FC<{
     );
   });
 
+  const potential_scores_by_user: { [key: string]: number[] } = {};
+
   //const scores as of last week, by getting the cummulativescores
   //and subtracting the last week
   const scores_last_week_unsorted: { [key: string]: number } = {};
@@ -333,6 +361,10 @@ const ScoreGChart: React.FC<{
               <th className="py-2 px-4 bg-gray-200 text-left">Username</th>
               <th className="py-2 px-4 bg-gray-200 text-left">Score</th>
               <th className="py-2 px-4 bg-gray-200 text-left">Weekly Score</th>
+              {/* Potential Points For Week*/}
+              <th className="py-2 px-4 bg-gray-200 text-left">
+                Potential Points
+              </th>
               <th className="py-2 px-4 bg-gray-200 text-left">Rank Change</th>
             </tr>
           </thead>
@@ -349,6 +381,11 @@ const ScoreGChart: React.FC<{
 
               const scoreChange = movement;
 
+              const potential_points_this_week =
+                this_weeks_potential_scores.find(
+                  (d) => d.user_id === user
+                )?.score;
+
               return (
                 <tr key={user}>
                   <td className="py-2 px-4 border-b border-gray-200">{user}</td>
@@ -358,6 +395,10 @@ const ScoreGChart: React.FC<{
                   <td className="py-2 px-4 border-b border-gray-200">
                     {this_weeks_scores.find((d) => d.user_id === user)?.score}
                   </td>
+                  <td className="py-2 px-4 border-b border-gray-200">
+                    {potential_points_this_week}
+                  </td>
+
                   <td className="py-2 px-4 border-b border-gray-200">
                     {scoreChange > 0 ? (
                       <>
