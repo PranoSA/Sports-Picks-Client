@@ -610,11 +610,23 @@ const ScoreGraph: React.FC<{ scores: AllScores }> = ({ scores }) => {
     isError: weeksError,
   } = useGetWeeksForCurrentYear();
 
+  //find index of last meaningful week
+  const last_week_index = weeks?.findIndex((week) => {
+    const date = new Date();
+    return week.start_date < date && week.end_date > date;
+  });
+
+  //trim weeKScores to only include weeks that have started
+  const meaningful_scores = scores.slice(0, (last_week_index || 0) + 1);
+
+  console.log('last_week_index', last_week_index);
+  console.log('meaningful_scores', meaningful_scores);
+
   const cumulativeScores: { [key: string]: number[] } = {};
   users.forEach((user) => {
     cumulativeScores[user] = [];
     let cumulativeScore = 0;
-    scores.forEach((weekScores) => {
+    meaningful_scores.forEach((weekScores) => {
       const userScore = weekScores.find((d) => d.user_id === user);
       if (userScore) {
         cumulativeScore += userScore.score;
@@ -624,13 +636,13 @@ const ScoreGraph: React.FC<{ scores: AllScores }> = ({ scores }) => {
   });
 
   const data = {
-    labels: scores.map((s, index) => {
+    labels: meaningful_scores.map((s, index) => {
       if (weeksLoading) return 'loading';
       if (!weeks) return 'loading';
       const week_for_score = weeks.find((week) => week.week_id == s[0].week);
       if (!week_for_score) return 'loading';
 
-      return week_for_score.start_date.toLocaleDateString();
+      return week_for_score.end_date.toLocaleDateString();
     }),
     datasets: users.map((user, index) => ({
       label: user,
