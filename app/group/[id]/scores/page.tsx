@@ -384,10 +384,40 @@ const ScoreGChart: React.FC<{
               //get the place of the user from last week
               //1 is the best, 2 is the second best
               //and so on
-              const this_weeks_placement = users.indexOf(user) + 1;
+              const users_sorted_by_score_tiebreaker_this_user = users.sort(
+                (a, b) => {
+                  const score_a =
+                    scores_by_user[a][scores_by_user[a].length - 1];
+                  const score_b =
+                    scores_by_user[b][scores_by_user[b].length - 1];
+                  if (score_a === score_b) {
+                    return scores_last_week[b] - scores_last_week[a];
+                  }
+                  return score_b - score_a;
+                }
+              );
+
+              const this_weeks_placement =
+                users_sorted_by_score_tiebreaker_this_user.findIndex(
+                  (d) => d === user
+                ) + 1;
+
+              const last_weeks_scores_tiebreaker_this_user =
+                last_weeks_scores.sort((a, b) => {
+                  const score_a = a.score;
+                  const score_b = b.score;
+                  if (score_a === score_b) {
+                    return (
+                      scores_last_week[b.user_id] - scores_last_week[a.user_id]
+                    );
+                  }
+                  return score_b - score_a;
+                });
 
               const last_weeks_placement =
-                Object.keys(scores_last_week).findIndex((d) => d === user) + 1;
+                last_weeks_scores_tiebreaker_this_user.findIndex(
+                  (d) => d.user_id === user
+                ) + 1;
 
               const movement = this_weeks_placement - last_weeks_placement;
 
