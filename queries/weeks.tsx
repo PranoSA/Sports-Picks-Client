@@ -14,6 +14,25 @@ const getToken = () => {
   return localStorage.getItem('accessToken');
 };
 
+const isPretendPerson = () => {
+  //for alternative_uuid
+  return localStorage.getItem('pretend_person');
+};
+
+const getHeaders = () => {
+  //check if pretendPerson is set
+  if (isPretendPerson()) {
+    return new Headers({
+      Authorization: `Bearer ${getToken()}`,
+      alternative_uuid: isPretendPerson() || '',
+    });
+  }
+
+  return new Headers({
+    Authorization: `Bearer ${getToken()}`,
+  });
+};
+
 const AddWeeks = async (weeks: InsertionWeek[]) => {
   const url = `${process.env.NEXT_PUBLIC_API_URL}/weeks`;
 
@@ -21,10 +40,7 @@ const AddWeeks = async (weeks: InsertionWeek[]) => {
 
   const res = await fetch(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${getToken()}`,
-    },
+    headers: getHeaders(),
     body: JSON.stringify(weeks),
   });
 
@@ -69,9 +85,7 @@ const getWeeks = async (year_id: string) => {
   const url = `${process.env.NEXT_PUBLIC_API_URL}/weeks/${year_id}`;
 
   const res = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
+    headers: getHeaders(),
   });
 
   if (!res.ok) {
@@ -120,6 +134,7 @@ const deleteWeek = async (week_id: string, year_id: string) => {
 
   const res = await fetch(url, {
     method: 'DELETE',
+    headers: getHeaders(),
   });
 
   if (!res.ok) {
@@ -180,9 +195,7 @@ const getWeeksForCurrentYear = async () => {
   const url = `${process.env.NEXT_PUBLIC_API_URL}/weeks/current_year`;
 
   const res = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
+    headers: getHeaders(),
   });
 
   if (!res.ok) {

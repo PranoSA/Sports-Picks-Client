@@ -16,6 +16,29 @@ import {
   UseMutationResult,
 } from '@tanstack/react-query';
 
+const getToken = () => {
+  return localStorage.getItem('accessToken');
+};
+
+const isPretendPerson = () => {
+  //for alternative_uuid
+  return localStorage.getItem('pretend_person');
+};
+
+const getHeaders = () => {
+  //check if pretendPerson is set
+  if (isPretendPerson()) {
+    return new Headers({
+      Authorization: `Bearer ${getToken()}`,
+      alternative_uuid: isPretendPerson() || '',
+    });
+  }
+
+  return new Headers({
+    Authorization: `Bearer ${getToken()}`,
+  });
+};
+
 // get the previous weeks to this point [just so you know what week you are on]
 const getWeeks = async (): Promise<FetchedWeek[]> => {
   const url: string = `${process.env.NEXT_PUBLIC_API_URL}/current_year/weeks`;

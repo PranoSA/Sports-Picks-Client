@@ -29,14 +29,31 @@ const getToken = () => {
   return localStorage.getItem('accessToken');
 };
 
+const isPretendPerson = () => {
+  //for alternative_uuid
+  return localStorage.getItem('pretend_person');
+};
+
+const getHeaders = () => {
+  //check if pretendPerson is set
+  if (isPretendPerson()) {
+    return new Headers({
+      Authorization: `Bearer ${getToken()}`,
+      alternative_uuid: isPretendPerson() || '',
+    });
+  }
+
+  return new Headers({
+    Authorization: `Bearer ${getToken()}`,
+  });
+};
+
 // fetch the groups you belong to
 const getGroups = async () => {
   const url = `${process.env.NEXT_PUBLIC_API_URL}/groups`;
 
   const res = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
+    headers: getHeaders(),
   });
 
   if (!res.ok) {
@@ -62,8 +79,8 @@ const createGroup = async (group: InsertionGroup) => {
   const res = await fetch(url, {
     method: 'POST',
     headers: {
+      ...getHeaders(),
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${getToken()}`,
     },
     body: JSON.stringify(group),
   });
@@ -91,9 +108,7 @@ const getGroupById = async (group_id: string): Promise<FetchedGroup> => {
   const url = `${process.env.NEXT_PUBLIC_API_URL}/groups/${group_id}`;
 
   const res = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
+    headers: getHeaders(),
   });
 
   if (!res.ok) {
@@ -130,9 +145,7 @@ const getGroupUsers = async (group_id: string): Promise<FetchedGroup_User> => {
   const url = `${process.env.NEXT_PUBLIC_API_URL}/groups/${group_id}/users`;
 
   const res = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
+    headers: getHeaders(),
   });
 
   if (!res.ok) {
@@ -162,11 +175,16 @@ const joinGroup = async (
   const res = await fetch(url, {
     method: 'POST',
     headers: {
+      ...getHeaders(),
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${getToken()}`,
     },
     body: JSON.stringify(joinGroup),
   });
+
+  //check if "already crated" http status code
+  if (res.status === 409) {
+    return [];
+  }
 
   if (!res.ok) {
     throw new Error('Network response was not okay');

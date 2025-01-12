@@ -25,13 +25,30 @@ const getToken = () => {
   return localStorage.getItem('accessToken');
 };
 
+const isPretendPerson = () => {
+  //for alternative_uuid
+  return localStorage.getItem('pretend_person');
+};
+
+const getHeaders = () => {
+  //check if pretendPerson is set
+  if (isPretendPerson()) {
+    return new Headers({
+      Authorization: `Bearer ${getToken()}`,
+      alternative_uuid: isPretendPerson() || '',
+    });
+  }
+
+  return new Headers({
+    Authorization: `Bearer ${getToken()}`,
+  });
+};
+
 const getGames = async (year_id: string, week_id: string) => {
   const url = `${process.env.NEXT_PUBLIC_API_URL}/games/${year_id}/${week_id}`;
 
   const res = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
+    headers: getHeaders(),
   });
 
   if (!res.ok) {
@@ -67,12 +84,13 @@ export const useGetGames = (
 const addGames = async (games: InsertionGame[]) => {
   const url: string = `${process.env.NEXT_PUBLIC_API_URL}/games`;
 
+  const headers = getHeaders();
+
+  headers.append('Content-Type', 'application/json');
+
   const res = await fetch(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${getToken()}`,
-    },
+    headers: headers,
     body: JSON.stringify(games),
   });
 
@@ -119,9 +137,7 @@ const deleteGame = async (game_id: string) => {
 
   const res = await fetch(url, {
     method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
+    headers: getHeaders(),
   });
 
   if (!res.ok) {
@@ -167,9 +183,7 @@ const getCurrentWeekGames = async () => {
   const url = `${process.env.NEXT_PUBLIC_API_URL}/games/current`;
 
   const res = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
+    headers: getHeaders(),
   });
 
   if (!res.ok) {
@@ -204,12 +218,13 @@ const submitScoreForGame = async (
 ) => {
   const url = `${process.env.NEXT_PUBLIC_API_URL}/games/${game_id}`;
 
+  const headers = getHeaders();
+
+  headers.append('Content-Type', 'application/json');
+
   const res = await fetch(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${getToken()}`,
-    },
+    headers: headers,
     body: JSON.stringify(final_score),
   });
 
@@ -260,9 +275,7 @@ const getGamesByWeek = async (week_id: string) => {
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/games/weeks/${week_id}`,
     {
-      headers: {
-        Authorization: `Bearer ${getToken()}`,
-      },
+      headers: getHeaders(),
     }
   );
 

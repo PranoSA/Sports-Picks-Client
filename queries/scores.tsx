@@ -6,15 +6,32 @@ const getToken = () => {
   return localStorage.getItem('accessToken');
 };
 
+const isPretendPerson = () => {
+  //for alternative_uuid
+  return localStorage.getItem('pretend_person');
+};
+
+const getHeaders = () => {
+  //check if pretendPerson is set
+  if (isPretendPerson()) {
+    return new Headers({
+      Authorization: `Bearer ${getToken()}`,
+      alternative_uuid: isPretendPerson() || '',
+    });
+  }
+
+  return new Headers({
+    Authorization: `Bearer ${getToken()}`,
+  });
+};
+
 const getScoresForGroup = async (groupId: string) => {
   const url = `${process.env.NEXT_PUBLIC_API_URL}/scores/${groupId}`;
 
   console.log('url', url);
 
   const res = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
+    headers: getHeaders(),
   });
 
   if (!res.ok) {

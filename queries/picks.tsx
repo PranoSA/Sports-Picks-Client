@@ -17,15 +17,35 @@ const getToken = () => {
   return localStorage.getItem('accessToken');
 };
 
+const isPretendPerson = () => {
+  //for alternative_uuid
+  return localStorage.getItem('pretend_person');
+};
+
+const getHeaders = () => {
+  //check if pretendPerson is set
+  if (isPretendPerson()) {
+    return new Headers({
+      Authorization: `Bearer ${getToken()}`,
+      alternative_uuid: isPretendPerson() || '',
+    });
+  }
+
+  return new Headers({
+    Authorization: `Bearer ${getToken()}`,
+  });
+};
+
 const addPicks = async (picks: InsertionChoice[], groupid: string) => {
   const url: string = `${process.env.NEXT_PUBLIC_API_URL}/picks/${groupid}`;
 
+  const headers = getHeaders();
+
+  headers.append('Content-Type', 'application/json');
+
   const res = await fetch(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${getToken()}`,
-    },
+    headers: headers,
     body: JSON.stringify(picks),
   });
 
@@ -49,6 +69,7 @@ export const useAddPicks = (
       //const newPicks: FetchedChoice[] = await getPicks(groupid);
       return picks;
     },
+    retry: 2,
     onSuccess: (newPicks) => {
       // get old picks
       const oldPicks = queryClient.getQueryData<FetchedChoice[]>([
@@ -69,9 +90,7 @@ const getPicks = async (group_id: string): Promise<FetchedChoice[]> => {
   const url = `${process.env.NEXT_PUBLIC_API_URL}/picks/${group_id}`;
 
   const res = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
+    headers: getHeaders(),
   });
 
   if (!res.ok) {
@@ -113,9 +132,7 @@ const getPicksByWeekId = async (
   const url = `${process.env.NEXT_PUBLIC_API_URL}/picks/${group_id}/${week_id}`;
 
   const res = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
+    headers: getHeaders(),
   });
 
   if (!res.ok) {

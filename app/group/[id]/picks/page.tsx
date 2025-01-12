@@ -167,10 +167,12 @@ const Page: React.FC<{
       if (!check_if_same) {
         setChoices(picks_made);
       }*/
-      console.log('Setting Choices');
+      console.log('Picks', picks);
+      console.log('Setting Choices useEffect');
+
       setChoices(picks_made);
     }
-  }, [choices, picks]);
+  }, [picks]);
 
   //submittable is true if changes have been made
   const submittable = useMemo(() => {
@@ -561,7 +563,7 @@ const Page: React.FC<{
           new_choice,
           ...old_choices.slice(index_of_choice + 1),
         ];
-        console.log('Setting Choices', new_choices);
+        console.log('Setting Choices Handle Game Selection', new_choices);
         setChoices(new_choices);
         choicesRef.current = new_choices;
         //handleSubmission();
@@ -572,7 +574,7 @@ const Page: React.FC<{
           pick: selection === 1 ? true : false,
         });
 
-        console.log('Setting Choices');
+        console.log('Setting Choices Handle Game Selection');
         //add the choice to the choices
         setChoices([
           ...old_choices,
