@@ -389,6 +389,10 @@ const ScoreGChart: React.FC<{
 
               const movement = this_weeks_placement - last_weeks_placement;
 
+              console.log('User', user);
+              console.log("This week's placement", this_weeks_placement);
+              console.log("Last week's placement", last_weeks_placement);
+
               const scoreChange = movement;
 
               const potential_points_this_week =
