@@ -261,6 +261,10 @@ const ScoreGChart: React.FC<{
     new Set(All_Scores.flat().map((d) => d.user_id))
   ).sort();
 
+  console.log('this_weeks_scores', this_weeks_scores);
+  console.log('last_weeks_scores', last_weeks_scores);
+  console.log('All_Scores', All_Scores);
+
   const scores_by_user: { [key: string]: number[] } = {};
 
   unsorted_users.forEach((user) => {
