@@ -389,6 +389,8 @@ const ScoreGChart: React.FC<{
     );
   });
 
+  console.log('users', users);
+
   console.log('scores_by_user', scores_by_user);
   //const scores as of last week, by getting the cummulativescores
   //and subtracting the last week
