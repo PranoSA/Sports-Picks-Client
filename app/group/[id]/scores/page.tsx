@@ -350,7 +350,9 @@ const ScoreGChart: React.FC<{
   users.forEach((user) => {
     const last_week_score = last_weeks_scores.find((d) => d.user_id === user);
     if (last_week_score) {
-      scores_last_week_unsorted[user] = last_week_score.score;
+      scores_last_week_unsorted[user] =
+        scores_by_user[user][scores_by_user[user].length - 1] -
+        last_week_score.score;
     } else {
       scores_last_week_unsorted[user] = 0;
     }
