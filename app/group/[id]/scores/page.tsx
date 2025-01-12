@@ -186,8 +186,8 @@ const Page: React.FC<{
     const this_weeks_scores = groupScores[week_index];
 
     const scores_potential = this_weeks_scores.map((user_score) => {
-      const { user_id, score, week } = user_score;
-      const potential_score = score + 10;
+      const { user_id, score, week, potential } = user_score;
+      const potential_score = potential;
       return {
         user_id,
         score: potential_score,
