@@ -2,7 +2,7 @@
 
 import { useGetWeeksForCurrentYear } from '@/queries/weeks';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { UserScore, WeekScores, AllScores } from '@/types/bets_and_odds';
 
@@ -83,6 +83,18 @@ const Page: React.FC<{
   const [selectedWeek, setSelectedWeek] = useState<string>('all');
 
   const { data: session, status } = useSession();
+
+  useEffect(() => {
+    //set local storage bearer token
+    if (typeof window !== 'undefined' && session) {
+      localStorage.setItem('accessToken', session.accessToken as string);
+      //set date_redeemed -> store unix timestamp
+      const now_time = Date.now();
+      const unix_time = Math.floor(now_time / 1000);
+
+      localStorage.setItem('date_redeemed', unix_time.toString());
+    }
+  }, [session]);
 
   const {
     data: groupScores,

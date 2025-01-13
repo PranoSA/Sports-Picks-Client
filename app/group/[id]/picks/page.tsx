@@ -131,6 +131,18 @@ const Page: React.FC<{
     setChoices([]);
   };
 
+  useEffect(() => {
+    //set local storage bearer token
+    if (typeof window !== 'undefined' && session) {
+      localStorage.setItem('accessToken', session.accessToken as string);
+      //set date_redeemed -> store unix timestamp
+      const now_time = Date.now();
+      const unix_time = Math.floor(now_time / 1000);
+
+      localStorage.setItem('date_redeemed', unix_time.toString());
+    }
+  }, [session]);
+
   //set choices to the picks when picks are fetched
   useEffect(() => {
     if (picks) {
