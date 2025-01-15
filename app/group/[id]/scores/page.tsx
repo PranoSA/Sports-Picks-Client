@@ -97,10 +97,34 @@ const Page: React.FC<{
   }, [session]);
 
   const {
-    data: groupScores,
+    data: groupScoresUnfiltered,
     isLoading: isScoresLoading,
     isError: isScoresError,
   } = seGetScoresForGroup(id);
+
+  const groupScores = useMemo(() => {
+    //find index of current week -> This should be the last week
+    if (!weeks) return [];
+
+    const last_week_index = weeks?.findIndex((week) => {
+      const date = new Date();
+      return week.start_date < date && week.end_date > date;
+    });
+
+    if (!last_week_index) return [];
+
+    if (last_week_index === -1) return [];
+
+    if (!groupScoresUnfiltered) return [];
+
+    //trim weeKScores to only include weeks that have started
+    const meaningful_scores = groupScoresUnfiltered.slice(
+      0,
+      last_week_index + 1
+    );
+
+    return meaningful_scores;
+  }, [groupScoresUnfiltered, weeks]);
 
   //filtered weeks memo
   //weeks that have started
