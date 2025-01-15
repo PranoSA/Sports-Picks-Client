@@ -122,7 +122,7 @@ const GroupHomePage: React.FC<{
 
   return (
     <div className="p-4 flex flex-col items-center dark:bg-gray-800 bg-gray-800">
-      <div className="w-full max-w-2xl bg-gray-800 p-6 rounded shadow-md">
+      <div className="w-full max-w-2xl bg-gray-800 p-6 rounded shadow-md text-white">
         <h1 className="text-2xl font-bold mb-4 dark:text-white">
           Group Details
         </h1>
