@@ -1189,12 +1189,15 @@ const Page: React.FC<{
             for over under -> empty string
             for moneyline -> the moneyline shown
             */
+            console.log('Choice for Bet', choice_for_bet);
+            console.log('Game for Bet', game_for_bet);
+
             const home_team_string =
               bet.type === 'spread'
                 ? //make sure pick
 
                   choice_for_bet?.pick
-                  ? `(${game_for_bet?.spread || 0 > 0 ? '-' : ''} ${Math.abs(
+                  ? ` (${(game_for_bet?.spread || 0) > 0 ? '+' : '-'}${Math.abs(
                       game_for_bet?.spread || 0
                     )})`
                   : ''
@@ -1216,7 +1219,7 @@ const Page: React.FC<{
             const away_team_string =
               bet.type === 'spread'
                 ? !choice_for_bet?.pick
-                  ? `(${game_for_bet?.spread || 0 > 0 ? '+' : ''} ${Math.abs(
+                  ? ` (${(game_for_bet?.spread || 0) > 0 ? '-' : '+'}${Math.abs(
                       game_for_bet?.spread || 0
                     )})`
                   : ''
@@ -1337,7 +1340,7 @@ const Page: React.FC<{
                     {
                       game_for_bet && (
                         <span className="ml-2 text-lg text-black">
-                          {game_for_bet.away_team} {away_team_string} @
+                          {game_for_bet.away_team} {away_team_string} @{' '}
                           {game_for_bet.home_team}
                           {home_team_string}
                         </span>
