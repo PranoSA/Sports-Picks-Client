@@ -219,7 +219,7 @@ const Page: React.FC<{
         return week.start_date < date && week.end_date > date;
       }) - 1;
 
-    if (week_index === -1) return [];
+    if (week_index === -2) return [];
 
     //if week_index is less than 2, just return
     // {"user_id": 0}, for all users
