@@ -205,6 +205,40 @@ const Page: React.FC<{
     return scores;
   }, [groupScores, weeks]);
 
+  const scores_two_weeks_ago: WeekScores = useMemo(() => {
+    if (!groupScores) return [];
+
+    if (!weeks) return [];
+
+    //find the index of the current week in weeks
+    const week_index = weeks?.findIndex((week) => {
+      const date = new Date();
+      return week.start_date < date && week.end_date > date;
+    });
+
+    if (week_index === -1) return [];
+
+    //if week_index is less than 2, just return
+    // {"user_id": 0}, for all users
+    if (week_index < 2) {
+      const scores = groupScores[0].map((userScore) => {
+        return {
+          user_id: userScore.user_id,
+          score: 0,
+          week: weeks[0].week_id,
+          potential: 0,
+        };
+      });
+
+      return scores;
+    }
+
+    //find the scores for the week
+    const scores = groupScores[week_index - 2];
+
+    return scores;
+  }, [groupScores, weeks]);
+
   const this_weeks_potential_scores = useMemo(() => {
     if (!groupScores) return [];
 
@@ -342,6 +376,7 @@ const Page: React.FC<{
         this_weeks_scores={this_weeks_scores}
         All_Scores={groupScores}
         this_weeks_potential_scores={this_weeks_potential_scores}
+        scores_two_weeks_ago={scores_two_weeks_ago}
       />
 
       <ScoreGraph scores={groupScores} />
@@ -389,11 +424,13 @@ const ScoreGChart: React.FC<{
   this_weeks_scores: WeekScores;
   All_Scores: AllScores;
   this_weeks_potential_scores: WeekScores;
+  scores_two_weeks_ago: WeekScores;
 }> = ({
   last_weeks_scores,
   this_weeks_scores,
   All_Scores,
   this_weeks_potential_scores,
+  scores_two_weeks_ago,
 }) => {
   const unsorted_users = Array.from(
     new Set(All_Scores.flat().map((d) => d.user_id))
@@ -474,13 +511,17 @@ const ScoreGChart: React.FC<{
   const scores_two_weeks_ago_unsorted: { [key: string]: number } = {};
 
   users.forEach((user) => {
-    const two_weeks_ago_score = last_weeks_scores.find(
+    const two_weeks_ago_score = scores_two_weeks_ago.find(
       (d) => d.user_id === user
     );
+
+    const last_week_score = last_weeks_scores.find((d) => d.user_id === user);
+
     if (two_weeks_ago_score) {
       scores_two_weeks_ago_unsorted[user] =
-        scores_by_user[user][scores_by_user[user].length - 2] -
-        two_weeks_ago_score.score;
+        scores_by_user[user][scores_by_user[user].length - 1] -
+        two_weeks_ago_score.score -
+        (last_week_score?.score || 0);
     } else {
       scores_two_weeks_ago_unsorted[user] = 0;
     }
@@ -490,15 +531,15 @@ const ScoreGChart: React.FC<{
     Object.entries(scores_last_week_unsorted).sort(([, a], [, b]) => b - a)
   );
 
+  const scores_two_weeks_ago_now = Object.fromEntries(
+    Object.entries(scores_two_weeks_ago_unsorted).sort(([, a], [, b]) => b - a)
+  );
+
   const scores_total = Object.fromEntries(
     Object.entries(scores_by_user).map(([user, scores]) => [
       user,
       scores[scores.length - 1],
     ])
-  );
-
-  const scores_two_weeks_ago = Object.fromEntries(
-    Object.entries(scores_two_weeks_ago_unsorted).sort(([, a], [, b]) => b - a)
   );
 
   console.log('scores_total', scores_total);
@@ -600,11 +641,12 @@ const ScoreGChart: React.FC<{
               });
 
               //find placement of user two weeks ago
-              const this_users_Score_two_weeks_ago = scores_two_weeks_ago[user];
+              const this_users_Score_two_weeks_ago =
+                scores_two_weeks_ago_now[user];
 
               //create an array of only the values sorted by the score
               const two_weeks_ago_scores_sorted = Object.entries(
-                scores_two_weeks_ago
+                scores_two_weeks_ago_now
               ).sort((a, b) => b[1] - a[1]);
 
               console.log(
