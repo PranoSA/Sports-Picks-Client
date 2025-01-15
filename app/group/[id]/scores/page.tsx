@@ -721,7 +721,7 @@ const ScoreGraph: React.FC<{ scores: AllScores }> = ({ scores }) => {
   });
 
   //trim weeKScores to only include weeks that have started
-  const meaningful_scores = scores.slice(0, (last_week_index || 0) + 1);
+  const meaningful_scores = scores; //.slice(0, (last_week_index || 0) + 1);
 
   console.log('last_week_index', last_week_index);
   console.log('meaningful_scores', meaningful_scores);
