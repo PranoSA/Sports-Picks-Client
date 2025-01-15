@@ -522,6 +522,8 @@ const ScoreGChart: React.FC<{
       (d) => d.user_id === user
     );
 
+    console.log('Scores Two Weeks Ago', scores_two_weeks_ago);
+
     const last_week_score = last_weeks_scores.find((d) => d.user_id === user);
 
     if (two_weeks_ago_score) {
