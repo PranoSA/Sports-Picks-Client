@@ -244,6 +244,8 @@ const Page: React.FC<{
 
     if (!weeks) return [];
 
+    if (groupScores.length === 0) return [];
+
     //find the index of the current week in weeks
     const week_index = weeks?.findIndex((week) => {
       const date = new Date();
@@ -345,6 +347,11 @@ const Page: React.FC<{
   }
 
   if (!groupScores) {
+    return <div>No scores found</div>;
+  }
+
+  //if groupScores empty array
+  if (groupScores.length === 0) {
     return <div>No scores found</div>;
   }
 
