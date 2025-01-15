@@ -375,6 +375,34 @@ const ScoreGChart: React.FC<{
     new Set(All_Scores.flat().map((d) => d.user_id))
   ).sort();
 
+  const [myUserId, setMyUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      //get the token from local storage
+      const token = localStorage.getItem('accessToken');
+
+      if (!token) {
+        return;
+      }
+
+      //get the user_id from the token
+      const token_parts = token?.split('.');
+
+      if (token_parts) {
+        try {
+          const payload = JSON.parse(atob(token_parts[1]));
+
+          console.log('payload', payload);
+
+          setMyUserId(payload.preferred_username);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  }, []);
+
   console.log('this_weeks_scores', this_weeks_scores);
   console.log('last_weeks_scores', last_weeks_scores);
   console.log('All_Scores', All_Scores);
@@ -419,6 +447,21 @@ const ScoreGChart: React.FC<{
     }
   });
 
+  const scores_two_weeks_ago_unsorted: { [key: string]: number } = {};
+
+  users.forEach((user) => {
+    const two_weeks_ago_score = last_weeks_scores.find(
+      (d) => d.user_id === user
+    );
+    if (two_weeks_ago_score) {
+      scores_two_weeks_ago_unsorted[user] =
+        scores_by_user[user][scores_by_user[user].length - 2] -
+        two_weeks_ago_score.score;
+    } else {
+      scores_two_weeks_ago_unsorted[user] = 0;
+    }
+  });
+
   const scores_last_week = Object.fromEntries(
     Object.entries(scores_last_week_unsorted).sort(([, a], [, b]) => b - a)
   );
@@ -428,6 +471,10 @@ const ScoreGChart: React.FC<{
       user,
       scores[scores.length - 1],
     ])
+  );
+
+  const scores_two_weeks_ago = Object.fromEntries(
+    Object.entries(scores_two_weeks_ago_unsorted).sort(([, a], [, b]) => b - a)
   );
 
   console.log('scores_total', scores_total);
@@ -443,9 +490,10 @@ const ScoreGChart: React.FC<{
         <table className="min-w-full bg-white text-black">
           <thead>
             <tr>
+              <th className="py-2 px-4 bg-gray-200 text-left">Place #.</th>
               <th className="py-2 px-4 bg-gray-200 text-left">Username</th>
               {/* Place */}
-              <th className="py-2 px-4 bg-gray-200 text-left">Place #.</th>
+
               <th className="py-2 px-4 bg-gray-200 text-left">Score</th>
               <th className="py-2 px-4 bg-gray-200 text-left">Weekly Score</th>
               {/* Potential Points For Week*/}
@@ -453,6 +501,10 @@ const ScoreGChart: React.FC<{
                 Potential Points
               </th>
               <th className="py-2 px-4 bg-gray-200 text-left">Rank Change</th>
+              {/* Last Week Rank Change*/}
+              <th className="py-2 px-4 bg-gray-200 text-left">
+                Last Week Rank Change
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -523,45 +575,33 @@ const ScoreGChart: React.FC<{
                 return score_b - score_a;
               });
 
-              //the first instance of that user's score
-              const users_score = total_scores.find(
-                (d) => d[1] === this_users_score
+              //find placement of user two weeks ago
+              const this_users_Score_two_weeks_ago = scores_two_weeks_ago[user];
+
+              //create an array of only the values sorted by the score
+              const two_weeks_ago_scores_sorted = Object.entries(
+                scores_two_weeks_ago
+              ).sort((a, b) => b[1] - a[1]);
+
+              console.log(
+                'Two Weeks Ago Scores Sorted',
+                two_weeks_ago_scores_sorted
               );
 
-              const users_sorted_by_score_tiebreaker_this_user_index =
-                total_scores.findIndex((d) => d[0] === user) + 1;
-
-              const this_weeks_placement =
-                users_sorted_by_score_tiebreaker_this_user_index;
-
-              //now find last weeks_placement
-              const users_score_last_week = Object.entries(scores_last_week);
-
-              const this_users_score_last_week = users_score_last_week.find(
-                (d) => d[0] === user
-              );
-
-              //count how many had better scores
-              const last_weeks_scores_tiebreaker_this_user =
-                last_weeks_scores.sort((a, b) => {
-                  const score_a = a.score;
-                  const score_b = b.score;
-                  if (score_a === score_b) {
-                    return (
-                      scores_last_week[b.user_id] - scores_last_week[a.user_id]
-                    );
-                  }
-                  return score_b - score_a;
-                });
-
-              const last_weeks_placement =
-                last_weeks_scores_tiebreaker_this_user.findIndex(
-                  (d) => d.user_id === user
+              //find the  index of the first instance of the user's score
+              const users_sorted_by_score_tiebreaker_two_weeks_ago_index =
+                //DO NOT USE A REFERENCE TO THIS USER, ITS THE SCORE VALUE
+                two_weeks_ago_scores_sorted.findIndex(
+                  (d) => d[1] === this_users_Score_two_weeks_ago
                 ) + 1;
 
               console.log('User', user);
 
               const scoreChange = movement;
+
+              const movement_last_week =
+                users_sorted_by_score_tiebreaker_last_week_index -
+                users_sorted_by_score_tiebreaker_two_weeks_ago_index;
 
               const potential_points_this_week =
                 this_weeks_potential_scores.find(
@@ -569,12 +609,21 @@ const ScoreGChart: React.FC<{
                 )?.score;
 
               return (
-                <tr key={user}>
-                  <td className="py-2 px-4 border-b border-gray-200">{user}</td>
+                <tr
+                  key={user}
+                  //highlight if this user id is the same as the logged in user
+                  className={
+                    myUserId === user
+                      ? 'bg-gray-200 border-2 border-green-700'
+                      : ''
+                  }
+                >
                   {/* Place */}
                   <td className="py-2 px-4 border-b border-gray-200">
                     {users_sorted_by_score_tiebreaker_this_week_index}
                   </td>
+                  <td className="py-2 px-4 border-b border-gray-200">{user}</td>
+
                   <td className="py-2 px-4 border-b border-gray-200">
                     {scores_by_user[user][scores_by_user[user].length - 1]}
                   </td>
@@ -600,6 +649,25 @@ const ScoreGChart: React.FC<{
                       <>
                         <FaArrowCircleRight className="text-gray-500 mr-1" />
                         <span>{scoreChange}</span>
+                      </>
+                    )}
+                  </td>
+                  {/* Last Week Rank Change*/}
+                  <td className="py-2 px-4 border-b border-gray-200">
+                    {movement_last_week > 0 ? (
+                      <>
+                        <FaArrowUp className="text-green-500 mr-1 text-green" />
+                        <span>{movement_last_week}</span>
+                      </>
+                    ) : movement_last_week < 0 ? (
+                      <>
+                        <FaArrowDown className="text-red-500 mr-1 text-red" />
+                        <span>{Math.abs(movement_last_week)}</span>
+                      </>
+                    ) : (
+                      <>
+                        <FaArrowCircleRight className="text-gray-500 mr-1" />
+                        <span>{movement_last_week}</span>
                       </>
                     )}
                   </td>
