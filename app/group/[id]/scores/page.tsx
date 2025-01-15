@@ -213,13 +213,12 @@ const Page: React.FC<{
     console.log('Weeks', weeks);
 
     //find the index of the current week in weeks
-    const week_index =
-      weeks?.findIndex((week) => {
-        const date = new Date();
-        return week.start_date < date && week.end_date > date;
-      }) - 1;
+    const week_index = weeks?.findIndex((week) => {
+      const date = new Date();
+      return week.start_date < date && week.end_date > date;
+    });
 
-    if (week_index === -2) return [];
+    if (week_index === -1) return [];
 
     //if week_index is less than 2, just return
     // {"user_id": 0}, for all users
@@ -240,7 +239,7 @@ const Page: React.FC<{
     }
 
     //find the scores for the week
-    const scores = groupScores[week_index - 2];
+    const scores = groupScores[week_index - 1];
 
     return scores;
   }, [groupScores, weeks]);
