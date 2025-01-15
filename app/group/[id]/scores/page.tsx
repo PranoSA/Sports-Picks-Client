@@ -221,6 +221,8 @@ const Page: React.FC<{
     //if week_index is less than 2, just return
     // {"user_id": 0}, for all users
     if (week_index < 2) {
+      console.log('week_index', week_index);
+
       const scores = groupScores[0].map((userScore) => {
         return {
           user_id: userScore.user_id,
