@@ -680,7 +680,7 @@ const ScoreGChart: React.FC<{
               const scoreChange = movement;
 
               const movement_last_week =
-                users_sorted_by_score_tiebreaker_last_week_index -
+                -users_sorted_by_score_tiebreaker_last_week_index +
                 users_sorted_by_score_tiebreaker_two_weeks_ago_index;
 
               const potential_points_this_week =
