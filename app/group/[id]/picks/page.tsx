@@ -830,10 +830,15 @@ const Page: React.FC<{
           if (bet.type === 'over_under') {
             const over_under = game.over_under;
 
-            return choice.pick !==
-              game.home_team_score + game.away_team_score > over_under
-              ? 'success'
-              : 'fail';
+            if (choice.pick) {
+              return game.home_team_score + game.away_team_score > over_under
+                ? 'success'
+                : 'fail';
+            } else {
+              return game.home_team_score + game.away_team_score < over_under
+                ? 'success'
+                : 'fail';
+            }
           }
 
           if (bet.type === 'moneyline') {
