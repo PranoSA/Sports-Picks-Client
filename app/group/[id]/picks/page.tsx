@@ -821,7 +821,7 @@ const Page: React.FC<{
                 ? 'success'
                 : 'fail';
             } else {
-              return game.away_team_score - game.home_team_score > spread
+              return game.away_team_score - game.home_team_score < spread
                 ? 'success'
                 : 'fail';
             }
@@ -1252,6 +1252,7 @@ const Page: React.FC<{
                                     ${
                                       bet_statuses[index] === 'in-progress'
                                         ? 'bg-yellow-200 text-black'
+
                                         : bet_statuses[index] === 'success'
                                         ? 'bg-green-500 text-white'
                                         : bet_statuses[index] === 'fail'
