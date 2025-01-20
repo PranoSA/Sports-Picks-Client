@@ -563,9 +563,9 @@ const ScoreGChart: React.FC<{
   console.log("users'", users);
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
+    <div className="max-w-4xl mx-auto p-4 ">
       <h2 className="text-2xl font-bold mb-4">Score Chart</h2>
-      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+      <div className="bg-white shadow-md rounded-lg overflow-hidden overflow-x-auto">
         <table className="min-w-full bg-white text-black">
           <thead>
             <tr>
